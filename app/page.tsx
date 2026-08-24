@@ -30,16 +30,18 @@ export default async function Home() {
       </div>
 
       {breakdown.length > 0 ? (
-        <>
-          <NetWorthCard data={breakdown} />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+          <div className="lg:col-span-3">
+            <NetWorthCard data={breakdown} />
+          </div>
           {assetDistribution.length > 0 && (
-            <div className="mt-6">
-              <Card className="p-6 sm:p-8">
+            <div className="lg:col-span-2">
+              <Card className="h-full p-6 sm:p-8">
                 <AssetDistribution data={assetDistribution} />
               </Card>
             </div>
           )}
-        </>
+        </div>
       ) : (
         <Card className="p-8 text-center">
           <p className="font-sans text-[0.9375rem] text-linen-700">

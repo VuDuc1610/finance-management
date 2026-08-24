@@ -48,18 +48,23 @@ export function AssetDistribution({ data }: AssetDistributionProps) {
           />
         ))}
       </div>
-      <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
+      <ul className="mt-4 flex flex-col gap-3">
         {data.map((entry, index) => (
-          <li key={entry.institutionName} className="flex items-center gap-2">
-            <span
-              className="h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ backgroundColor: colorForIndex(index) }}
-              aria-hidden="true"
-            />
-            <span className="font-sans text-[0.8125rem] text-ink-900">
-              {entry.institutionName}
+          <li
+            key={entry.institutionName}
+            className="flex items-center justify-between gap-3"
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: colorForIndex(index) }}
+                aria-hidden="true"
+              />
+              <span className="truncate font-sans text-[0.8125rem] text-ink-900">
+                {entry.institutionName}
+              </span>
             </span>
-            <span className="font-mono text-[0.8125rem] text-linen-700">
+            <span className="shrink-0 font-mono text-[0.8125rem] text-linen-700">
               {currency.format(entry.value)} · {entry.percent.toFixed(1)}%
             </span>
           </li>
