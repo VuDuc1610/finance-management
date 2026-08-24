@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/snapshot-balances",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/sync-transactions",
+      "schedule": "10 13 * * *"
     }
   ]
 }
