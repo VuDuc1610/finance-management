@@ -1,4 +1,4 @@
-import { and, gte, lt } from "drizzle-orm";
+import { and, eq, gte, lt } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { transactions } from "@/lib/db/schema";
 import {
@@ -38,6 +38,22 @@ export interface CategoryTransactionsResult {
   transactions: CategoryTransaction[];
   categoryLabel: string;
   monthLabel: string;
+}
+
+export interface DailyTotal {
+  day: number;
+  amount: number;
+}
+
+export interface DayTransaction extends CategoryTransaction {
+  categoryLabel: string;
+  color: string;
+}
+
+export interface DayTransactionsResult {
+  transactions: DayTransaction[];
+  total: number;
+  dateLabel: string;
 }
 
 const OTHER_KEY = "OTHER";
@@ -206,5 +222,74 @@ export async function getCategoryTransactions(
     transactions: sortedTransactions,
     categoryLabel,
     monthLabel: MONTH_NAMES[month - 1],
+  };
+}
+
+export async function getDailyTotals(
+  year: number,
+  month: number,
+): Promise<DailyTotal[]> {
+  const rows = await getMonthSpendingRows(year, month);
+
+  const totalsByDay = new Map<number, number>();
+  for (const row of rows) {
+    const day = Number(row.date.slice(8, 10));
+    totalsByDay.set(day, (totalsByDay.get(day) ?? 0) + row.amount);
+  }
+
+  return Array.from(totalsByDay.entries())
+    .map(([day, amount]) => ({ day, amount }))
+    .sort((a, b) => a.day - b.day);
+}
+
+export async function getDayTransactions(
+  date: string,
+): Promise<DayTransactionsResult> {
+  const rows = await db
+    .select({
+      id: transactions.id,
+      name: transactions.name,
+      amount: transactions.amount,
+      date: transactions.date,
+      pending: transactions.pending,
+      category: transactions.personalFinanceCategoryPrimary,
+    })
+    .from(transactions)
+    .where(eq(transactions.date, date));
+
+  const spendingRows = rows
+    .map((row) => ({ ...row, amount: Number(row.amount) }))
+    .filter((row) => row.amount > 0 && isSpendingCategory(row.category));
+
+  const categoryKeysByCount = new Map<string, number>();
+  for (const row of spendingRows) {
+    const key = row.category ?? OTHER_KEY;
+    categoryKeysByCount.set(key, (categoryKeysByCount.get(key) ?? 0) + 1);
+  }
+  const keyOrder = Array.from(categoryKeysByCount.keys());
+
+  const dayTransactions: DayTransaction[] = spendingRows
+    .map((row) => {
+      const key = row.category ?? OTHER_KEY;
+      const index = keyOrder.indexOf(key);
+      return {
+        id: row.id,
+        name: row.name,
+        amount: row.amount,
+        date: row.date,
+        pending: row.pending,
+        categoryLabel: row.category ? labelForCategory(row.category) : "Other",
+        color: dyeHueForIndex(index),
+      };
+    })
+    .sort((a, b) => b.amount - a.amount);
+
+  const total = dayTransactions.reduce((sum, t) => sum + t.amount, 0);
+  const [year, month, day] = date.split("-").map(Number);
+
+  return {
+    transactions: dayTransactions,
+    total,
+    dateLabel: `${MONTH_NAMES[month - 1]} ${day}, ${year}`,
   };
 }

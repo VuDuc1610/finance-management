@@ -1,8 +1,13 @@
 import { Card } from "@/components/ui/Card";
 import { SpendingDonut } from "@/components/spending/SpendingDonut";
 import { CategoryCard } from "@/components/spending/CategoryCard";
+import { SpendingCalendar } from "@/components/spending/SpendingCalendar";
 import { SpendingMonthPicker } from "@/components/spending/SpendingMonthPicker";
-import { getAvailableMonths, getSpendingCategories } from "@/lib/spending";
+import {
+  getAvailableMonths,
+  getDailyTotals,
+  getSpendingCategories,
+} from "@/lib/spending";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +51,10 @@ export default async function SpendingPage(props: PageProps<"/spending">) {
       ? requested
       : availableMonths[0];
 
-  const summary = await getSpendingCategories(selected.year, selected.month);
+  const [summary, dailyTotals] = await Promise.all([
+    getSpendingCategories(selected.year, selected.month),
+    getDailyTotals(selected.year, selected.month),
+  ]);
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
@@ -82,6 +90,19 @@ export default async function SpendingPage(props: PageProps<"/spending">) {
                   />
                 ))}
               </div>
+            </Card>
+          </div>
+
+          <div className="mt-6">
+            <Card className="p-6 sm:p-8">
+              <h2 className="mb-4 font-sans text-[1rem] font-medium text-ink-900">
+                Daily spending
+              </h2>
+              <SpendingCalendar
+                year={selected.year}
+                month={selected.month}
+                dailyTotals={dailyTotals}
+              />
             </Card>
           </div>
         </>
