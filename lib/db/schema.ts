@@ -7,6 +7,7 @@ import {
   date,
   timestamp,
   unique,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 export const plaidItems = pgTable("plaid_items", {
@@ -14,6 +15,7 @@ export const plaidItems = pgTable("plaid_items", {
   institutionName: text("institution_name").notNull(),
   plaidItemId: text("plaid_item_id").notNull().unique(),
   accessToken: text("access_token").notNull(),
+  transactionsCursor: text("transactions_cursor"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -50,3 +52,20 @@ export const balanceSnapshots = pgTable(
     accountDateUnique: unique().on(table.accountId, table.date),
   }),
 );
+
+export const transactions = pgTable("transactions", {
+  id: serial("id").primaryKey(),
+  accountId: integer("account_id")
+    .notNull()
+    .references(() => accounts.id),
+  plaidTransactionId: text("plaid_transaction_id").notNull().unique(),
+  name: text("name").notNull(),
+  amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
+  date: date("date").notNull(),
+  pending: boolean("pending").notNull().default(false),
+  personalFinanceCategoryPrimary: text("personal_finance_category_primary"),
+  personalFinanceCategoryDetailed: text("personal_finance_category_detailed"),
+  isoCurrencyCode: text("iso_currency_code"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
