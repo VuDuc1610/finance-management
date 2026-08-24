@@ -43,7 +43,7 @@ export default async function DayTransactionsPage(
       </Link>
 
       <div className="mt-2 mb-6 flex items-baseline gap-3">
-        <h1 className="font-sans text-[1.125rem] font-medium text-ink-900">
+        <h1 className="font-sans text-[1.25rem] font-medium text-ink-900">
           {result.dateLabel}
         </h1>
         {result.total > 0 && (

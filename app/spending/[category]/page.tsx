@@ -55,7 +55,7 @@ export default async function CategoryTransactionsPage(
         ← Back to Where it went
       </Link>
 
-      <h1 className="mt-2 mb-6 font-sans text-[1.125rem] font-medium text-ink-900">
+      <h1 className="mt-2 mb-6 font-sans text-[1.25rem] font-medium text-ink-900">
         {result.categoryLabel} — {result.monthLabel}
       </h1>
 

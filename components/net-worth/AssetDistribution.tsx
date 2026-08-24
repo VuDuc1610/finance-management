@@ -34,7 +34,7 @@ export function AssetDistribution({ data }: AssetDistributionProps) {
 
   return (
     <div>
-      <h2 className="mb-4 font-sans text-[0.8125rem] font-medium tracking-wide text-linen-700 uppercase">
+      <h2 className="mb-4 font-sans text-[0.9375rem] font-medium tracking-wide text-linen-700 uppercase">
         Where your money sits
       </h2>
       <div className="flex h-3 w-full overflow-hidden rounded-pill">

@@ -21,7 +21,7 @@ export default async function Home() {
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="font-sans text-[1.125rem] font-medium text-ink-900">
+        <h1 className="font-sans text-[1.25rem] font-medium text-ink-900">
           Accounts
         </h1>
         <div className="flex gap-3">

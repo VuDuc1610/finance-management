@@ -93,7 +93,7 @@ export function NetWorthCard({ data }: NetWorthCardProps) {
     <Card className="p-6 sm:p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="flex items-center gap-1.5 font-sans text-[0.8125rem] font-medium tracking-wide text-linen-700 uppercase">
+          <div className="flex items-center gap-1.5 font-sans text-[0.9375rem] font-medium tracking-wide text-linen-700 uppercase">
             {metric === "net"
               ? "Net worth"
               : metric === "assets"

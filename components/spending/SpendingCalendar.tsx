@@ -35,7 +35,7 @@ export function SpendingCalendar({ year, month, dailyTotals }: SpendingCalendarP
         {WEEKDAY_LABELS.map((label) => (
           <div
             key={label}
-            className="pb-1 text-center font-sans text-[0.6875rem] font-medium tracking-wide text-linen-700 uppercase"
+            className="pb-1 text-center font-sans text-[0.75rem] font-medium tracking-wide text-linen-700 uppercase"
           >
             {label}
           </div>
