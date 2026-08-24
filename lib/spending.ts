@@ -1,4 +1,4 @@
-import { and, eq, gte, lt } from "drizzle-orm";
+import { and, gte, lt } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { transactions } from "@/lib/db/schema";
 import {
@@ -40,9 +40,10 @@ function pad2(value: number): string {
 
 function monthRange(year: number, month: number): { start: string; end: string } {
   const start = `${year}-${pad2(month)}-01`;
-  const endDate =
-    month === 12 ? new Date(year + 1, 0, 1) : new Date(year, month, 1);
-  const end = endDate.toISOString().slice(0, 10);
+  const end =
+    month === 12
+      ? `${year + 1}-01-01`
+      : `${year}-${pad2(month + 1)}-01`;
   return { start, end };
 }
 
