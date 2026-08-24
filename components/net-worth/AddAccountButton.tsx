@@ -8,6 +8,7 @@ export function AddAccountButton() {
   const router = useRouter();
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [isLinking, setIsLinking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,6 +30,7 @@ export function AddAccountButton() {
   const onSuccess = useCallback(
     (public_token: string | null, metadata: PlaidLinkOnSuccessMetadata) => {
       setIsLinking(true);
+      setError(null);
       fetch("/api/plaid/exchange-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -37,8 +39,15 @@ export function AddAccountButton() {
           institutionName: metadata.institution?.name,
         }),
       })
-        .then(() => {
-          router.refresh();
+        .then((res) => {
+          if (res.ok) {
+            router.refresh();
+          } else {
+            setError("Couldn't connect that account. Please try again.");
+          }
+        })
+        .catch(() => {
+          setError("Couldn't connect that account. Please try again.");
         })
         .finally(() => {
           setIsLinking(false);
@@ -53,13 +62,18 @@ export function AddAccountButton() {
   });
 
   return (
-    <button
-      type="button"
-      onClick={() => open()}
-      disabled={!ready || isLinking}
-      className="rounded-pill bg-dye-saffron px-4 py-2 font-sans text-[0.8125rem] font-medium text-ink-900 hover:opacity-90 disabled:opacity-50"
-    >
-      {isLinking ? "Connecting…" : "+ Add account"}
-    </button>
+    <div className="flex flex-col items-end gap-1">
+      <button
+        type="button"
+        onClick={() => open()}
+        disabled={!ready || isLinking}
+        className="rounded-pill bg-dye-saffron px-4 py-2 font-sans text-[0.8125rem] font-medium text-ink-900 hover:opacity-90 disabled:opacity-50"
+      >
+        {isLinking ? "Connecting…" : "+ Add account"}
+      </button>
+      {error ? (
+        <p className="font-sans text-[0.75rem] text-dye-madder">{error}</p>
+      ) : null}
+    </div>
   );
 }
