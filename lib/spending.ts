@@ -1,6 +1,6 @@
 import { and, eq, gte, lt } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { transactions } from "@/lib/db/schema";
+import { plaidItems, transactions } from "@/lib/db/schema";
 import {
   dyeHueForIndex,
   isSpendingCategory,
@@ -10,6 +10,28 @@ import {
 export interface SpendingMonth {
   year: number;
   month: number;
+}
+
+export interface ItemNeedingReconnect {
+  itemId: number;
+  institutionName: string;
+}
+
+export async function getItemsNeedingReconnect(): Promise<
+  ItemNeedingReconnect[]
+> {
+  const rows = await db
+    .select({
+      id: plaidItems.id,
+      institutionName: plaidItems.institutionName,
+    })
+    .from(plaidItems)
+    .where(eq(plaidItems.transactionsConsentMissing, true));
+
+  return rows.map((row) => ({
+    itemId: row.id,
+    institutionName: row.institutionName,
+  }));
 }
 
 export interface SpendingCategory {

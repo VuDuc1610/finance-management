@@ -16,6 +16,9 @@ export const plaidItems = pgTable("plaid_items", {
   plaidItemId: text("plaid_item_id").notNull().unique(),
   accessToken: text("access_token").notNull(),
   transactionsCursor: text("transactions_cursor"),
+  transactionsConsentMissing: boolean("transactions_consent_missing")
+    .notNull()
+    .default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

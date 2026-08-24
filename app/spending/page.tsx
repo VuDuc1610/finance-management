@@ -3,9 +3,11 @@ import { SpendingDonut } from "@/components/spending/SpendingDonut";
 import { CategoryCard } from "@/components/spending/CategoryCard";
 import { SpendingCalendar } from "@/components/spending/SpendingCalendar";
 import { SpendingMonthPicker } from "@/components/spending/SpendingMonthPicker";
+import { ReconnectAccountButton } from "@/components/spending/ReconnectAccountButton";
 import {
   getAvailableMonths,
   getDailyTotals,
+  getItemsNeedingReconnect,
   getSpendingCategories,
 } from "@/lib/spending";
 
@@ -13,7 +15,30 @@ export const dynamic = "force-dynamic";
 
 export default async function SpendingPage(props: PageProps<"/spending">) {
   const searchParams = await props.searchParams;
-  const availableMonths = await getAvailableMonths();
+  const [availableMonths, itemsNeedingReconnect] = await Promise.all([
+    getAvailableMonths(),
+    getItemsNeedingReconnect(),
+  ]);
+
+  const reconnectBanner =
+    itemsNeedingReconnect.length > 0 ? (
+      <Card className="mb-6 flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="font-sans text-[0.8125rem] text-ink-900">
+          {itemsNeedingReconnect.length === 1
+            ? `${itemsNeedingReconnect[0].institutionName} needs to be reconnected to include it in Spending.`
+            : "Some accounts need to be reconnected to include them in Spending."}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {itemsNeedingReconnect.map((item) => (
+            <ReconnectAccountButton
+              key={item.itemId}
+              itemId={item.itemId}
+              institutionName={item.institutionName}
+            />
+          ))}
+        </div>
+      </Card>
+    ) : null;
 
   if (availableMonths.length === 0) {
     return (
@@ -21,6 +46,7 @@ export default async function SpendingPage(props: PageProps<"/spending">) {
         <h1 className="mb-6 font-sans text-[1.125rem] font-medium text-ink-900">
           Where it went
         </h1>
+        {reconnectBanner}
         <Card className="p-8 text-center">
           <p className="font-sans text-[0.9375rem] text-linen-700">
             No transactions yet — link an account and give the sync a moment
@@ -64,6 +90,8 @@ export default async function SpendingPage(props: PageProps<"/spending">) {
         </h1>
         <SpendingMonthPicker availableMonths={availableMonths} selected={selected} />
       </div>
+
+      {reconnectBanner}
 
       {summary.categories.length > 0 ? (
         <>

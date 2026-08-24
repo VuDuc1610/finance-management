@@ -3,6 +3,16 @@ import { eq } from "drizzle-orm";
 import { plaidClient } from "@/lib/plaid/client";
 import { accounts, plaidItems, transactions } from "@/lib/db/schema";
 
+function getPlaidErrorCode(err: unknown): string | undefined {
+  if (typeof err !== "object" || err === null || !("response" in err)) {
+    return undefined;
+  }
+  const response = (err as { response?: { data?: { error_code?: unknown } } })
+    .response;
+  const code = response?.data?.error_code;
+  return typeof code === "string" ? code : undefined;
+}
+
 export async function GET(request: NextRequest) {
   const providedSecret = request.headers
     .get("authorization")
@@ -97,13 +107,23 @@ export async function GET(request: NextRequest) {
 
       await db
         .update(plaidItems)
-        .set({ transactionsCursor: cursor })
+        .set({ transactionsCursor: cursor, transactionsConsentMissing: false })
         .where(eq(plaidItems.id, item.id));
     } catch (err) {
+      const errorCode = getPlaidErrorCode(err);
+
       console.error(
         "cron/sync-transactions item failed:",
-        err instanceof Error ? err.name : "unknown error",
+        errorCode ?? (err instanceof Error ? err.name : "unknown error"),
       );
+
+      if (errorCode === "ADDITIONAL_CONSENT_REQUIRED") {
+        await db
+          .update(plaidItems)
+          .set({ transactionsConsentMissing: true })
+          .where(eq(plaidItems.id, item.id));
+      }
+
       failedItems.push({ id: item.id, institutionName: item.institutionName });
     }
   }
