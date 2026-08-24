@@ -72,6 +72,8 @@ export default async function SpendingPage(props: PageProps<"/spending">) {
               data={summary.categories}
               total={summary.total}
               monthLabel={summary.monthLabel}
+              year={selected.year}
+              month={selected.month}
             />
           </Card>
 
