@@ -1,12 +1,16 @@
 import { Card } from "@/components/ui/Card";
 import { NetWorthCard } from "@/components/net-worth/NetWorthCard";
+import { AssetDistribution } from "@/components/net-worth/AssetDistribution";
 import { AddAccountButton } from "@/components/net-worth/AddAccountButton";
-import { getNetWorthSummary } from "@/lib/net-worth";
+import { getAssetDistribution, getNetWorthSummary } from "@/lib/net-worth";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const summary = await getNetWorthSummary();
+  const [summary, assetDistribution] = await Promise.all([
+    getNetWorthSummary(),
+    getAssetDistribution(),
+  ]);
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
@@ -26,13 +30,22 @@ export default async function Home() {
       </div>
 
       {summary ? (
-        <NetWorthCard
-          data={summary.series}
-          currentValue={summary.currentValue}
-          changeAmount={summary.changeAmount}
-          changePercent={summary.changePercent}
-          rangeLabel={summary.rangeLabel}
-        />
+        <>
+          <NetWorthCard
+            data={summary.series}
+            currentValue={summary.currentValue}
+            changeAmount={summary.changeAmount}
+            changePercent={summary.changePercent}
+            rangeLabel={summary.rangeLabel}
+          />
+          {assetDistribution.length > 0 && (
+            <div className="mt-6">
+              <Card className="p-6 sm:p-8">
+                <AssetDistribution data={assetDistribution} />
+              </Card>
+            </div>
+          )}
+        </>
       ) : (
         <Card className="p-8 text-center">
           <p className="font-sans text-[0.9375rem] text-linen-700">
