@@ -34,6 +34,12 @@ function subtypeLabel(subtype: string | null): string {
     .join(" ");
 }
 
+const LIABILITY_TYPES = new Set(["credit", "loan"]);
+
+function amountColorClass(type: string): string {
+  return LIABILITY_TYPES.has(type) ? "text-dye-madder" : "text-dye-moss";
+}
+
 export function AccountsBreakdown({ groups }: AccountsBreakdownProps) {
   if (groups.length === 0) {
     return null;
@@ -59,7 +65,9 @@ export function AccountsBreakdown({ groups }: AccountsBreakdownProps) {
                   {Math.abs(group.changePercent).toFixed(1)}%) 1 month change
                 </span>
               </div>
-              <span className="font-mono text-[0.9375rem] text-ink-900">
+              <span
+                className={`font-mono text-[0.9375rem] ${amountColorClass(group.type)}`}
+              >
                 {currency.format(group.total)}
               </span>
             </div>
@@ -79,7 +87,9 @@ export function AccountsBreakdown({ groups }: AccountsBreakdownProps) {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-mono text-[0.875rem] text-ink-900">
+                    <p
+                      className={`font-mono text-[0.875rem] ${amountColorClass(group.type)}`}
+                    >
                       {currency.format(account.balance)}
                     </p>
                     <p className="font-mono text-[0.75rem] text-linen-700">
