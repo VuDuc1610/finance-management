@@ -1,0 +1,108 @@
+import Link from "next/link";
+import { Card } from "@/components/ui/Card";
+import { getCategoryTransactions } from "@/lib/spending";
+
+export const dynamic = "force-dynamic";
+
+const currency = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+function formatDate(iso: string): string {
+  const date = new Date(`${iso}T00:00:00`);
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+export default async function CategoryTransactionsPage(
+  props: PageProps<"/spending/[category]">,
+) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
+
+  const categoryKey = decodeURIComponent(params.category);
+  const yearParam = Array.isArray(searchParams.year)
+    ? searchParams.year[0]
+    : searchParams.year;
+  const monthParam = Array.isArray(searchParams.month)
+    ? searchParams.month[0]
+    : searchParams.month;
+  const year = Number(yearParam);
+  const month = Number(monthParam);
+
+  const backHref =
+    yearParam && monthParam
+      ? `/spending?year=${yearParam}&month=${monthParam}`
+      : "/spending";
+
+  if (!year || !month) {
+    return (
+      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
+        <Link
+          href={backHref}
+          className="font-sans text-[0.8125rem] text-linen-700 hover:text-ink-900"
+        >
+          ← Back to Where it went
+        </Link>
+        <Card className="mt-6 p-8 text-center">
+          <p className="font-sans text-[0.9375rem] text-linen-700">
+            Missing month — go back and pick a month first.
+          </p>
+        </Card>
+      </main>
+    );
+  }
+
+  const result = await getCategoryTransactions(year, month, categoryKey);
+
+  return (
+    <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
+      <Link
+        href={backHref}
+        className="font-sans text-[0.8125rem] text-linen-700 hover:text-ink-900"
+      >
+        ← Back to Where it went
+      </Link>
+
+      <h1 className="mt-2 mb-6 font-sans text-[1.125rem] font-medium text-ink-900">
+        {result.categoryLabel} — {result.monthLabel}
+      </h1>
+
+      <Card className="p-6 sm:p-8">
+        {result.transactions.length > 0 ? (
+          <ul className="flex flex-col divide-y divide-linen-300">
+            {result.transactions.map((transaction) => (
+              <li
+                key={transaction.id}
+                className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-[0.8125rem] text-linen-700">
+                    {formatDate(transaction.date)}
+                  </span>
+                  <span className="font-sans text-[0.875rem] text-ink-900">
+                    {transaction.name}
+                  </span>
+                  {transaction.pending && (
+                    <span className="rounded-pill border border-linen-300 px-2 py-0.5 font-sans text-[0.6875rem] text-linen-700">
+                      Pending
+                    </span>
+                  )}
+                </div>
+                <span className="font-mono text-[0.875rem] text-ink-900">
+                  -{currency.format(transaction.amount)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="font-sans text-[0.9375rem] text-linen-700">
+            No transactions found for this category.
+          </p>
+        )}
+      </Card>
+    </main>
+  );
+}

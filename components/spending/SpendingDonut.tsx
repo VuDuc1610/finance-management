@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import type { SpendingCategory } from "@/lib/mock-spending-data";
+import type { SpendingCategory } from "@/lib/spending";
 
 interface SpendingDonutProps {
   data: SpendingCategory[];
@@ -45,7 +45,7 @@ export function SpendingDonut({ data, total, monthLabel }: SpendingDonutProps) {
               stroke="none"
             >
               {data.map((category) => (
-                <Cell key={category.name} fill={category.color} />
+                <Cell key={category.key} fill={category.color} />
               ))}
             </Pie>
           </PieChart>
@@ -62,7 +62,7 @@ export function SpendingDonut({ data, total, monthLabel }: SpendingDonutProps) {
 
       <ul className="flex flex-col gap-3">
         {data.map((category) => (
-          <li key={category.name} className="flex items-center gap-3">
+          <li key={category.key} className="flex items-center gap-3">
             <span
               className="h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: category.color }}

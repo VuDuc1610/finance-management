@@ -74,7 +74,12 @@ export default async function SpendingPage(props: PageProps<"/spending">) {
               </h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {summary.categories.map((category) => (
-                  <CategoryCard key={category.name} category={category} />
+                  <CategoryCard
+                    key={category.key}
+                    category={category}
+                    year={selected.year}
+                    month={selected.month}
+                  />
                 ))}
               </div>
             </Card>

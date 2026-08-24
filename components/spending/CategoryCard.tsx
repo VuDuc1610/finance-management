@@ -1,7 +1,10 @@
-import type { SpendingCategory } from "@/lib/mock-spending-data";
+import Link from "next/link";
+import type { SpendingCategory } from "@/lib/spending";
 
 interface CategoryCardProps {
   category: SpendingCategory;
+  year: number;
+  month: number;
 }
 
 const currency = new Intl.NumberFormat("en-US", {
@@ -11,9 +14,12 @@ const currency = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
-export function CategoryCard({ category }: CategoryCardProps) {
+export function CategoryCard({ category, year, month }: CategoryCardProps) {
   return (
-    <div className="rounded-card border border-linen-300 p-4">
+    <Link
+      href={`/spending/${encodeURIComponent(category.key)}?year=${year}&month=${month}`}
+      className="block rounded-card border border-linen-300 p-4 hover:bg-linen-300/20"
+    >
       <div className="flex items-center justify-between">
         <span className="font-mono text-[1.125rem] text-ink-900">
           {currency.format(category.amount)}
@@ -32,6 +38,6 @@ export function CategoryCard({ category }: CategoryCardProps) {
           {category.name}
         </span>
       </div>
-    </div>
+    </Link>
   );
 }

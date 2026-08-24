@@ -6,11 +6,18 @@ import {
   isSpendingCategory,
   labelForCategory,
 } from "@/lib/plaid/categories";
-import type { SpendingCategory } from "@/lib/mock-spending-data";
 
 export interface SpendingMonth {
   year: number;
   month: number;
+}
+
+export interface SpendingCategory {
+  key: string;
+  name: string;
+  amount: number;
+  percent: number;
+  color: string;
 }
 
 export interface SpendingSummary {
@@ -18,6 +25,22 @@ export interface SpendingSummary {
   total: number;
   monthLabel: string;
 }
+
+export interface CategoryTransaction {
+  id: number;
+  name: string;
+  amount: number;
+  date: string;
+  pending: boolean;
+}
+
+export interface CategoryTransactionsResult {
+  transactions: CategoryTransaction[];
+  categoryLabel: string;
+  monthLabel: string;
+}
+
+const OTHER_KEY = "OTHER";
 
 const MONTH_NAMES = [
   "January",
@@ -47,6 +70,50 @@ function monthRange(year: number, month: number): { start: string; end: string }
   return { start, end };
 }
 
+interface SpendingRow {
+  id: number;
+  name: string;
+  amount: number;
+  date: string;
+  pending: boolean;
+  category: string | null;
+}
+
+async function getMonthSpendingRows(
+  year: number,
+  month: number,
+): Promise<SpendingRow[]> {
+  const { start, end } = monthRange(year, month);
+
+  const rows = await db
+    .select({
+      id: transactions.id,
+      name: transactions.name,
+      amount: transactions.amount,
+      date: transactions.date,
+      pending: transactions.pending,
+      category: transactions.personalFinanceCategoryPrimary,
+    })
+    .from(transactions)
+    .where(and(gte(transactions.date, start), lt(transactions.date, end)));
+
+  return rows
+    .map((row) => ({ ...row, amount: Number(row.amount) }))
+    .filter((row) => row.amount > 0 && isSpendingCategory(row.category));
+}
+
+function getTopCategoryKeys(rows: SpendingRow[], limit: number): string[] {
+  const totals = new Map<string, number>();
+  for (const row of rows) {
+    const key = row.category ?? OTHER_KEY;
+    totals.set(key, (totals.get(key) ?? 0) + row.amount);
+  }
+  return Array.from(totals.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([key]) => key);
+}
+
 export async function getAvailableMonths(): Promise<SpendingMonth[]> {
   const rows = await db.select({ date: transactions.date }).from(transactions);
 
@@ -67,25 +134,12 @@ export async function getSpendingCategories(
   year: number,
   month: number,
 ): Promise<SpendingSummary> {
-  const { start, end } = monthRange(year, month);
-
-  const rows = await db
-    .select({
-      amount: transactions.amount,
-      category: transactions.personalFinanceCategoryPrimary,
-    })
-    .from(transactions)
-    .where(and(gte(transactions.date, start), lt(transactions.date, end)));
+  const rows = await getMonthSpendingRows(year, month);
 
   const totalsByCategory = new Map<string, number>();
-
   for (const row of rows) {
-    const amount = Number(row.amount);
-    if (amount <= 0) continue;
-    if (!isSpendingCategory(row.category)) continue;
-
-    const key = row.category ?? "OTHER";
-    totalsByCategory.set(key, (totalsByCategory.get(key) ?? 0) + amount);
+    const key = row.category ?? OTHER_KEY;
+    totalsByCategory.set(key, (totalsByCategory.get(key) ?? 0) + row.amount);
   }
 
   const sorted = Array.from(totalsByCategory.entries()).sort((a, b) => b[1] - a[1]);
@@ -99,22 +153,58 @@ export async function getSpendingCategories(
     amount,
   }));
   if (otherTotal > 0) {
-    buckets.push({ key: "OTHER", amount: otherTotal });
+    buckets.push({ key: OTHER_KEY, amount: otherTotal });
   }
 
   const total = buckets.reduce((sum, bucket) => sum + bucket.amount, 0);
 
   const categories: SpendingCategory[] = buckets.map((bucket, index) => ({
-    name: bucket.key === "OTHER" ? "Other" : labelForCategory(bucket.key),
+    key: bucket.key,
+    name: bucket.key === OTHER_KEY ? "Other" : labelForCategory(bucket.key),
     amount: bucket.amount,
-    percent:
-      total > 0 ? Math.round((bucket.amount / total) * 1000) / 10 : 0,
+    percent: total > 0 ? Math.round((bucket.amount / total) * 1000) / 10 : 0,
     color: dyeHueForIndex(index),
   }));
 
   return {
     categories,
     total,
+    monthLabel: MONTH_NAMES[month - 1],
+  };
+}
+
+export async function getCategoryTransactions(
+  year: number,
+  month: number,
+  categoryKey: string,
+): Promise<CategoryTransactionsResult> {
+  const rows = await getMonthSpendingRows(year, month);
+
+  let matched: SpendingRow[];
+  let categoryLabel: string;
+
+  if (categoryKey === OTHER_KEY) {
+    const topKeys = new Set(getTopCategoryKeys(rows, 4));
+    matched = rows.filter((row) => !topKeys.has(row.category ?? OTHER_KEY));
+    categoryLabel = "Other";
+  } else {
+    matched = rows.filter((row) => row.category === categoryKey);
+    categoryLabel = labelForCategory(categoryKey);
+  }
+
+  const sortedTransactions: CategoryTransaction[] = matched
+    .map((row) => ({
+      id: row.id,
+      name: row.name,
+      amount: row.amount,
+      date: row.date,
+      pending: row.pending,
+    }))
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  return {
+    transactions: sortedTransactions,
+    categoryLabel,
     monthLabel: MONTH_NAMES[month - 1],
   };
 }
