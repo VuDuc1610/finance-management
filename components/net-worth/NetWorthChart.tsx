@@ -10,10 +10,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { NetWorthDataPoint } from "@/lib/mock-data";
+interface NetWorthChartPoint {
+  date: string;
+  value: number;
+}
 
 interface NetWorthChartProps {
-  data: NetWorthDataPoint[];
+  data: NetWorthChartPoint[];
 }
 
 const currency = new Intl.NumberFormat("en-US", {

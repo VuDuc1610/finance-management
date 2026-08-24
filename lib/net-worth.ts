@@ -2,22 +2,18 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { accounts, balanceSnapshots, plaidItems } from "@/lib/db/schema";
 
-export interface NetWorthPoint {
+export interface NetWorthBreakdownPoint {
   date: string;
-  value: number;
-}
-
-export interface NetWorthSummary {
-  series: NetWorthPoint[];
-  currentValue: number;
-  changeAmount: number;
-  changePercent: number;
-  rangeLabel: string;
+  net: number;
+  assets: number;
+  liabilities: number;
 }
 
 const LIABILITY_TYPES = new Set(["credit", "loan"]);
 
-export async function getNetWorthSeries(): Promise<NetWorthPoint[]> {
+export async function getNetWorthBreakdownSeries(): Promise<
+  NetWorthBreakdownPoint[]
+> {
   const rows = await db
     .select({
       date: balanceSnapshots.date,
@@ -27,51 +23,26 @@ export async function getNetWorthSeries(): Promise<NetWorthPoint[]> {
     .from(balanceSnapshots)
     .innerJoin(accounts, eq(balanceSnapshots.accountId, accounts.id));
 
-  const totalsByDate = new Map<string, number>();
+  const byDate = new Map<string, { assets: number; liabilities: number }>();
 
   for (const row of rows) {
-    const signedBalance = LIABILITY_TYPES.has(row.type)
-      ? -Number(row.balance)
-      : Number(row.balance);
-    totalsByDate.set(
-      row.date,
-      (totalsByDate.get(row.date) ?? 0) + signedBalance,
-    );
+    const bucket = byDate.get(row.date) ?? { assets: 0, liabilities: 0 };
+    if (LIABILITY_TYPES.has(row.type)) {
+      bucket.liabilities += Number(row.balance);
+    } else {
+      bucket.assets += Number(row.balance);
+    }
+    byDate.set(row.date, bucket);
   }
 
-  return Array.from(totalsByDate.entries())
-    .map(([date, value]) => ({ date, value }))
+  return Array.from(byDate.entries())
+    .map(([date, { assets, liabilities }]) => ({
+      date,
+      assets,
+      liabilities,
+      net: assets - liabilities,
+    }))
     .sort((a, b) => a.date.localeCompare(b.date));
-}
-
-export async function getNetWorthSummary(): Promise<NetWorthSummary | null> {
-  const series = await getNetWorthSeries();
-
-  if (series.length === 0) {
-    return null;
-  }
-
-  const current = series[series.length - 1];
-  const thirtyDaysAgoTarget = new Date(current.date);
-  thirtyDaysAgoTarget.setDate(thirtyDaysAgoTarget.getDate() - 30);
-  const thirtyDaysAgoIso = thirtyDaysAgoTarget.toISOString().slice(0, 10);
-
-  const comparisonPoint =
-    series.find((point) => point.date >= thirtyDaysAgoIso) ?? series[0];
-
-  const changeAmount = current.value - comparisonPoint.value;
-  const changePercent =
-    comparisonPoint.value !== 0
-      ? (changeAmount / Math.abs(comparisonPoint.value)) * 100
-      : 0;
-
-  return {
-    series,
-    currentValue: current.value,
-    changeAmount,
-    changePercent,
-    rangeLabel: "1 month",
-  };
 }
 
 export interface AssetDistributionEntry {

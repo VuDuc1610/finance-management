@@ -2,13 +2,13 @@ import { Card } from "@/components/ui/Card";
 import { NetWorthCard } from "@/components/net-worth/NetWorthCard";
 import { AssetDistribution } from "@/components/net-worth/AssetDistribution";
 import { AddAccountButton } from "@/components/net-worth/AddAccountButton";
-import { getAssetDistribution, getNetWorthSummary } from "@/lib/net-worth";
+import { getAssetDistribution, getNetWorthBreakdownSeries } from "@/lib/net-worth";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [summary, assetDistribution] = await Promise.all([
-    getNetWorthSummary(),
+  const [breakdown, assetDistribution] = await Promise.all([
+    getNetWorthBreakdownSeries(),
     getAssetDistribution(),
   ]);
 
@@ -29,15 +29,9 @@ export default async function Home() {
         </div>
       </div>
 
-      {summary ? (
+      {breakdown.length > 0 ? (
         <>
-          <NetWorthCard
-            data={summary.series}
-            currentValue={summary.currentValue}
-            changeAmount={summary.changeAmount}
-            changePercent={summary.changePercent}
-            rangeLabel={summary.rangeLabel}
-          />
+          <NetWorthCard data={breakdown} />
           {assetDistribution.length > 0 && (
             <div className="mt-6">
               <Card className="p-6 sm:p-8">
