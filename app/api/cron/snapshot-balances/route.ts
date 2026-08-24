@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { plaidClient } from "@/lib/plaid/client";
-import { db } from "@/lib/db/client";
 import { accounts, balanceSnapshots, plaidItems } from "@/lib/db/schema";
 
 export async function GET(request: NextRequest) {
@@ -12,6 +11,8 @@ export async function GET(request: NextRequest) {
   if (!providedSecret || providedSecret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const { db } = await import("@/lib/db/client");
 
   const items = await db.select().from(plaidItems);
   const today = new Date().toISOString().slice(0, 10);
