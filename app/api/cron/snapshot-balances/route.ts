@@ -17,42 +17,51 @@ export async function GET(request: NextRequest) {
   const items = await db.select().from(plaidItems);
   const today = new Date().toISOString().slice(0, 10);
   let snapshotCount = 0;
+  const failedItems: { id: number; institutionName: string }[] = [];
 
   for (const item of items) {
-    const balanceResponse = await plaidClient.accountsBalanceGet({
-      access_token: item.accessToken,
-    });
+    try {
+      const balanceResponse = await plaidClient.accountsBalanceGet({
+        access_token: item.accessToken,
+      });
 
-    for (const plaidAccount of balanceResponse.data.accounts) {
-      const [localAccount] = await db
-        .select()
-        .from(accounts)
-        .where(eq(accounts.plaidAccountId, plaidAccount.account_id));
+      for (const plaidAccount of balanceResponse.data.accounts) {
+        const [localAccount] = await db
+          .select()
+          .from(accounts)
+          .where(eq(accounts.plaidAccountId, plaidAccount.account_id));
 
-      if (!localAccount) continue;
+        if (!localAccount) continue;
 
-      const balance = plaidAccount.balances.current;
-      if (balance === null || balance === undefined) continue;
+        const balance = plaidAccount.balances.current;
+        if (balance === null || balance === undefined) continue;
 
-      await db
-        .insert(balanceSnapshots)
-        .values({
-          accountId: localAccount.id,
-          date: today,
-          currentBalance: balance.toString(),
-          isoCurrencyCode: plaidAccount.balances.iso_currency_code ?? "USD",
-        })
-        .onConflictDoUpdate({
-          target: [balanceSnapshots.accountId, balanceSnapshots.date],
-          set: {
+        await db
+          .insert(balanceSnapshots)
+          .values({
+            accountId: localAccount.id,
+            date: today,
             currentBalance: balance.toString(),
             isoCurrencyCode: plaidAccount.balances.iso_currency_code ?? "USD",
-          },
-        });
+          })
+          .onConflictDoUpdate({
+            target: [balanceSnapshots.accountId, balanceSnapshots.date],
+            set: {
+              currentBalance: balance.toString(),
+              isoCurrencyCode: plaidAccount.balances.iso_currency_code ?? "USD",
+            },
+          });
 
-      snapshotCount += 1;
+        snapshotCount += 1;
+      }
+    } catch (err) {
+      console.error(
+        "cron/snapshot-balances item failed:",
+        err instanceof Error ? err.name : "unknown error",
+      );
+      failedItems.push({ id: item.id, institutionName: item.institutionName });
     }
   }
 
-  return NextResponse.json({ success: true, snapshotCount });
+  return NextResponse.json({ success: true, snapshotCount, failedItems });
 }
