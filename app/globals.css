@@ -1,26 +1,54 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  --color-linen-100: #ede7dc;
+  --color-linen-300: #d8cfbe;
+  --color-linen-700: #8c8375;
+  --color-ink-900: #2b2a28;
+  --color-dye-indigo: #2f4858;
+  --color-dye-madder: #a8493a;
+  --color-dye-moss: #6b8a5a;
+  --color-dye-saffron: #d6a23c;
+  --color-dye-plum: #6c5b7b;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-karla);
+  --font-mono: var(--font-plex-mono);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --radius-card: 12px;
+  --radius-pill: 999px;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-linen-100);
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M0%200L24%2024M24%200L0%2024'%20stroke='%232B2A28'%20stroke-opacity='0.04'%20stroke-width='1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  color: var(--color-ink-900);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-dye-indigo);
+  outline-offset: 2px;
+}
+
+.chart-bloom {
+  filter: blur(6px) saturate(0);
+  transition: filter 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chart-bloom.is-bloomed {
+  filter: blur(0) saturate(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chart-bloom {
+    filter: none;
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+  }
+
+  .chart-bloom.is-bloomed {
+    opacity: 1;
+  }
 }
