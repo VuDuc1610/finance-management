@@ -107,7 +107,8 @@ export async function getSpendingCategories(
   const categories: SpendingCategory[] = buckets.map((bucket, index) => ({
     name: bucket.key === "OTHER" ? "Other" : labelForCategory(bucket.key),
     amount: bucket.amount,
-    percent: total > 0 ? (bucket.amount / total) * 100 : 0,
+    percent:
+      total > 0 ? Math.round((bucket.amount / total) * 1000) / 10 : 0,
     color: dyeHueForIndex(index),
   }));
 
