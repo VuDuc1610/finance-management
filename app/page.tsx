@@ -3,6 +3,8 @@ import { NetWorthCard } from "@/components/net-worth/NetWorthCard";
 import { AddAccountButton } from "@/components/net-worth/AddAccountButton";
 import { getNetWorthSummary } from "@/lib/net-worth";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const summary = await getNetWorthSummary();
 
