@@ -7,11 +7,15 @@ import { usePlaidLink, PlaidLinkOnSuccessMetadata } from "react-plaid-link";
 interface ReconnectAccountButtonProps {
   itemId: number;
   institutionName: string;
+  label?: string;
+  loadingLabel?: string;
 }
 
 export function ReconnectAccountButton({
   itemId,
   institutionName,
+  label = `Reconnect ${institutionName}`,
+  loadingLabel = "Reconnecting…",
 }: ReconnectAccountButtonProps) {
   const router = useRouter();
   const [linkToken, setLinkToken] = useState<string | null>(null);
@@ -81,7 +85,7 @@ export function ReconnectAccountButton({
         disabled={!ready || isLinking}
         className="rounded-pill border border-dye-saffron px-3 py-1.5 font-sans text-[0.8125rem] font-medium text-ink-900 hover:bg-dye-saffron/10 disabled:opacity-50"
       >
-        {isLinking ? "Reconnecting…" : `Reconnect ${institutionName}`}
+        {isLinking ? loadingLabel : label}
       </button>
       {error ? (
         <p className="font-sans text-[0.75rem] text-dye-madder">{error}</p>

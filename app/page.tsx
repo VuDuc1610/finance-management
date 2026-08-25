@@ -3,20 +3,24 @@ import { NetWorthCard } from "@/components/net-worth/NetWorthCard";
 import { AssetDistribution } from "@/components/net-worth/AssetDistribution";
 import { AccountsBreakdown } from "@/components/net-worth/AccountsBreakdown";
 import { AddAccountButton } from "@/components/net-worth/AddAccountButton";
+import { ReconnectAccountButton } from "@/components/spending/ReconnectAccountButton";
 import {
   getAccountsBreakdown,
   getAssetDistribution,
+  getLinkedInstitutions,
   getNetWorthBreakdownSeries,
 } from "@/lib/net-worth";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [breakdown, assetDistribution, accountsBreakdown] = await Promise.all([
-    getNetWorthBreakdownSeries(),
-    getAssetDistribution(),
-    getAccountsBreakdown(),
-  ]);
+  const [breakdown, assetDistribution, accountsBreakdown, linkedInstitutions] =
+    await Promise.all([
+      getNetWorthBreakdownSeries(),
+      getAssetDistribution(),
+      getAccountsBreakdown(),
+      getLinkedInstitutions(),
+    ]);
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
@@ -34,6 +38,23 @@ export default async function Home() {
           <AddAccountButton />
         </div>
       </div>
+
+      {linkedInstitutions.length > 0 && (
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <span className="font-sans text-[0.75rem] text-linen-700">
+            Adding a new account at a bank you&apos;ve already linked?
+          </span>
+          {linkedInstitutions.map((item) => (
+            <ReconnectAccountButton
+              key={item.itemId}
+              itemId={item.itemId}
+              institutionName={item.institutionName}
+              label={`Manage ${item.institutionName}`}
+              loadingLabel="Opening…"
+            />
+          ))}
+        </div>
+      )}
 
       {breakdown.length > 0 ? (
         <>

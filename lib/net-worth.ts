@@ -244,3 +244,22 @@ export async function getAccountsBreakdown(): Promise<AccountGroup[]> {
 
   return result;
 }
+
+export interface LinkedInstitution {
+  itemId: number;
+  institutionName: string;
+}
+
+export async function getLinkedInstitutions(): Promise<LinkedInstitution[]> {
+  const rows = await db
+    .select({
+      id: plaidItems.id,
+      institutionName: plaidItems.institutionName,
+    })
+    .from(plaidItems);
+
+  return rows.map((row) => ({
+    itemId: row.id,
+    institutionName: row.institutionName,
+  }));
+}
