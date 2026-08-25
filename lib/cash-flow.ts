@@ -11,6 +11,7 @@ export interface CashFlowMonth {
 export interface CashFlowNode {
   name: string;
   color: string;
+  href?: string;
 }
 
 export interface CashFlowLink {
@@ -74,6 +75,14 @@ export async function getAvailableCashFlowMonths(): Promise<CashFlowMonth[]> {
     });
 }
 
+function incomeSourceLabel(primary: string | null, detailed: string | null): string | null {
+  if (primary === "INCOME") return detailLabel("INCOME", detailed);
+  if (primary === "TRANSFER_IN" && detailed === "TRANSFER_IN_TRANSFER_IN_FROM_APPS") {
+    return "From Friends & Family";
+  }
+  return null;
+}
+
 function detailLabel(primary: string, detailed: string | null): string {
   if (!detailed) return "Other";
   const prefix = `${primary}_`;
@@ -95,6 +104,7 @@ export async function getCashFlowSankey(
   const rows = await db
     .select({
       amount: transactions.amount,
+      personalAmount: transactions.personalAmount,
       primary: transactions.personalFinanceCategoryPrimary,
       detailed: transactions.personalFinanceCategoryDetailed,
     })
@@ -102,7 +112,8 @@ export async function getCashFlowSankey(
     .where(and(gte(transactions.date, start), lt(transactions.date, end)));
 
   const parsed = rows.map((row) => ({
-    amount: Number(row.amount),
+    amount:
+      row.personalAmount === null ? Number(row.amount) : Number(row.personalAmount),
     primary: row.primary,
     detailed: row.detailed,
   }));
@@ -135,11 +146,11 @@ export async function getCashFlowSankey(
   const links: CashFlowLink[] = [];
   const nodeIndex = new Map<string, number>();
 
-  function nodeFor(key: string, name: string, color: string): number {
+  function nodeFor(key: string, name: string, color: string, href?: string): number {
     const existing = nodeIndex.get(key);
     if (existing !== undefined) return existing;
     const idx = nodes.length;
-    nodes.push({ name, color });
+    nodes.push({ name, color, href });
     nodeIndex.set(key, idx);
     return idx;
   }
@@ -148,16 +159,14 @@ export async function getCashFlowSankey(
 
   const incomeBySource = new Map<string, number>();
   for (const row of incomeRows) {
-    const label =
-      row.primary === "TRANSFER_IN"
-        ? "From Friends & Family"
-        : detailLabel("INCOME", row.detailed);
+    const label = incomeSourceLabel(row.primary, row.detailed) ?? "Other Income";
     incomeBySource.set(label, (incomeBySource.get(label) ?? 0) + Math.abs(row.amount));
   }
   for (const [label, amount] of Array.from(incomeBySource.entries()).sort(
     (a, b) => b[1] - a[1],
   )) {
-    const idx = nodeFor(`income-source:${label}`, label, INDIGO);
+    const href = `/cash-flow/income/${encodeURIComponent(label)}?year=${year}&month=${month}`;
+    const idx = nodeFor(`income-source:${label}`, label, INDIGO, href);
     links.push({ source: idx, target: incomeNodeIdx, value: amount });
   }
 
@@ -230,4 +239,66 @@ export async function getCashFlowSankey(
     savingsRate: (leftover / totalIncome) * 100,
     monthLabel,
   };
+}
+
+export interface IncomeSourceTransaction {
+  id: number;
+  name: string;
+  amount: number;
+  originalAmount: number;
+  personalAmount: number | null;
+  date: string;
+  pending: boolean;
+}
+
+export interface IncomeSourceTransactionsResult {
+  transactions: IncomeSourceTransaction[];
+  sourceLabel: string;
+  monthLabel: string;
+}
+
+export async function getIncomeSourceTransactions(
+  year: number,
+  month: number,
+  sourceLabel: string,
+): Promise<IncomeSourceTransactionsResult> {
+  const { start, end } = monthRange(year, month);
+  const monthLabel = `${MONTH_NAMES[month - 1]} ${year}`;
+
+  const rows = await db
+    .select({
+      id: transactions.id,
+      name: transactions.name,
+      amount: transactions.amount,
+      personalAmount: transactions.personalAmount,
+      date: transactions.date,
+      pending: transactions.pending,
+      primary: transactions.personalFinanceCategoryPrimary,
+      detailed: transactions.personalFinanceCategoryDetailed,
+    })
+    .from(transactions)
+    .where(and(gte(transactions.date, start), lt(transactions.date, end)));
+
+  const matched = rows.filter(
+    (row) => incomeSourceLabel(row.primary, row.detailed) === sourceLabel,
+  );
+
+  const list: IncomeSourceTransaction[] = matched
+    .map((row) => {
+      const originalAmount = Number(row.amount);
+      const personalAmount = row.personalAmount === null ? null : Number(row.personalAmount);
+      const effective = personalAmount ?? originalAmount;
+      return {
+        id: row.id,
+        name: row.name,
+        amount: Math.abs(effective),
+        originalAmount: Math.abs(originalAmount),
+        personalAmount,
+        date: row.date,
+        pending: row.pending,
+      };
+    })
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  return { transactions: list, sourceLabel, monthLabel };
 }

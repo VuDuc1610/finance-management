@@ -52,6 +52,8 @@ export interface CategoryTransaction {
   id: number;
   name: string;
   amount: number;
+  originalAmount: number;
+  personalAmount: number | null;
   date: string;
   pending: boolean;
 }
@@ -112,6 +114,8 @@ interface SpendingRow {
   id: number;
   name: string;
   amount: number;
+  originalAmount: number;
+  personalAmount: number | null;
   date: string;
   pending: boolean;
   category: string | null;
@@ -128,6 +132,7 @@ async function getMonthSpendingRows(
       id: transactions.id,
       name: transactions.name,
       amount: transactions.amount,
+      personalAmount: transactions.personalAmount,
       date: transactions.date,
       pending: transactions.pending,
       category: transactions.personalFinanceCategoryPrimary,
@@ -136,7 +141,16 @@ async function getMonthSpendingRows(
     .where(and(gte(transactions.date, start), lt(transactions.date, end)));
 
   return rows
-    .map((row) => ({ ...row, amount: Number(row.amount) }))
+    .map((row) => {
+      const originalAmount = Number(row.amount);
+      const personalAmount = row.personalAmount === null ? null : Number(row.personalAmount);
+      return {
+        ...row,
+        originalAmount,
+        personalAmount,
+        amount: personalAmount ?? originalAmount,
+      };
+    })
     .filter((row) => row.amount > 0 && isSpendingCategory(row.category));
 }
 
@@ -235,6 +249,8 @@ export async function getCategoryTransactions(
       id: row.id,
       name: row.name,
       amount: row.amount,
+      originalAmount: row.originalAmount,
+      personalAmount: row.personalAmount,
       date: row.date,
       pending: row.pending,
     }))
@@ -272,6 +288,7 @@ export async function getDayTransactions(
       id: transactions.id,
       name: transactions.name,
       amount: transactions.amount,
+      personalAmount: transactions.personalAmount,
       date: transactions.date,
       pending: transactions.pending,
       category: transactions.personalFinanceCategoryPrimary,
@@ -280,7 +297,16 @@ export async function getDayTransactions(
     .where(eq(transactions.date, date));
 
   const spendingRows = rows
-    .map((row) => ({ ...row, amount: Number(row.amount) }))
+    .map((row) => {
+      const originalAmount = Number(row.amount);
+      const personalAmount = row.personalAmount === null ? null : Number(row.personalAmount);
+      return {
+        ...row,
+        originalAmount,
+        personalAmount,
+        amount: personalAmount ?? originalAmount,
+      };
+    })
     .filter((row) => row.amount > 0 && isSpendingCategory(row.category));
 
   const categoryKeysByCount = new Map<string, number>();
@@ -298,6 +324,8 @@ export async function getDayTransactions(
         id: row.id,
         name: row.name,
         amount: row.amount,
+        originalAmount: row.originalAmount,
+        personalAmount: row.personalAmount,
         date: row.date,
         pending: row.pending,
         categoryLabel: row.category ? labelForCategory(row.category) : "Other",

@@ -64,6 +64,7 @@ export const transactions = pgTable("transactions", {
   plaidTransactionId: text("plaid_transaction_id").notNull().unique(),
   name: text("name").notNull(),
   amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
+  personalAmount: numeric("personal_amount", { precision: 14, scale: 2 }),
   date: date("date").notNull(),
   pending: boolean("pending").notNull().default(false),
   personalFinanceCategoryPrimary: text("personal_finance_category_primary"),

@@ -59,9 +59,12 @@ export default async function DayTransactionsPage(
             {result.transactions.map((transaction) => (
               <TransactionRow
                 key={transaction.id}
+                id={transaction.id}
                 date={transaction.date}
                 name={transaction.name}
                 amount={transaction.amount}
+                originalAmount={transaction.originalAmount}
+                personalAmount={transaction.personalAmount}
                 pending={transaction.pending}
                 categoryLabel={transaction.categoryLabel}
                 color={transaction.color}

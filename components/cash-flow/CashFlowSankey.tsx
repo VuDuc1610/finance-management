@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ResponsiveContainer,
   Sankey,
@@ -22,21 +23,29 @@ const currency = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
-function makeNodeRenderer(totalIncome: number) {
+function makeNodeRenderer(
+  totalIncome: number,
+  onNavigate: (href: string) => void,
+) {
   return function CashFlowNodeShape(props: SankeyNodeProps) {
     const { x, y, width, height, payload } = props;
-    const color = (payload as unknown as CashFlowNode).color;
+    const node = payload as unknown as CashFlowNode;
     const percent = (payload.value / totalIncome) * 100;
+    const clickable = Boolean(node.href);
 
     return (
-      <g>
-        <rect x={x} y={y} width={width} height={height} rx={2} fill={color} />
+      <g
+        onClick={clickable ? () => onNavigate(node.href!) : undefined}
+        style={clickable ? { cursor: "pointer" } : undefined}
+      >
+        <rect x={x} y={y} width={width} height={height} rx={2} fill={node.color} />
         <text
           x={x + width + 8}
           y={y + height / 2 - 4}
           fontFamily="var(--font-sans)"
           fontSize={12}
           fill="var(--color-ink-900)"
+          textDecoration={clickable ? "underline" : undefined}
         >
           {payload.name}
         </text>
@@ -79,6 +88,7 @@ function CashFlowLinkShape(props: SankeyLinkProps) {
 }
 
 export function CashFlowSankey({ nodes, links, totalIncome }: CashFlowSankeyProps) {
+  const router = useRouter();
   const [bloomed, setBloomed] = useState(false);
 
   useEffect(() => {
@@ -101,7 +111,7 @@ export function CashFlowSankey({ nodes, links, totalIncome }: CashFlowSankeyProp
             nodePadding={30}
             margin={{ top: 8, right: 160, bottom: 8, left: 8 }}
             link={CashFlowLinkShape}
-            node={makeNodeRenderer(totalIncome)}
+            node={makeNodeRenderer(totalIncome, (href) => router.push(href))}
           />
         </ResponsiveContainer>
       </div>
