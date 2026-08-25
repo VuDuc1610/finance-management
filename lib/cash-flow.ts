@@ -23,6 +23,9 @@ export interface CashFlowSankeyResult {
   nodes: CashFlowNode[];
   links: CashFlowLink[];
   totalIncome: number;
+  totalExpenses: number;
+  netIncome: number;
+  savingsRate: number;
   monthLabel: string;
 }
 
@@ -111,7 +114,15 @@ export async function getCashFlowSankey(
   const totalSpending = spendingRows.reduce((sum, row) => sum + row.amount, 0);
 
   if (totalIncome <= 0) {
-    return { nodes: [], links: [], totalIncome: 0, monthLabel };
+    return {
+      nodes: [],
+      links: [],
+      totalIncome: 0,
+      totalExpenses: totalSpending,
+      netIncome: -totalSpending,
+      savingsRate: 0,
+      monthLabel,
+    };
   }
 
   const nodes: CashFlowNode[] = [];
@@ -201,5 +212,13 @@ export async function getCashFlowSankey(
     }
   }
 
-  return { nodes, links, totalIncome, monthLabel };
+  return {
+    nodes,
+    links,
+    totalIncome,
+    totalExpenses: totalSpending,
+    netIncome: leftover,
+    savingsRate: (leftover / totalIncome) * 100,
+    monthLabel,
+  };
 }

@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/Card";
 import { CashFlowSankey } from "@/components/cash-flow/CashFlowSankey";
 import { CashFlowMonthPicker } from "@/components/cash-flow/CashFlowMonthPicker";
+import { CashFlowSummaryStats } from "@/components/cash-flow/CashFlowSummaryStats";
 import { getAvailableCashFlowMonths, getCashFlowSankey } from "@/lib/cash-flow";
 
 export const dynamic = "force-dynamic";
@@ -57,16 +58,25 @@ export default async function CashFlowPage(props: PageProps<"/cash-flow">) {
       </div>
 
       {sankey.nodes.length > 0 ? (
-        <Card className="p-6 sm:p-8">
-          <p className="mb-4 font-mono text-[0.8125rem] text-linen-700">
-            {sankey.monthLabel}
-          </p>
-          <CashFlowSankey
-            nodes={sankey.nodes}
-            links={sankey.links}
+        <>
+          <CashFlowSummaryStats
             totalIncome={sankey.totalIncome}
+            totalExpenses={sankey.totalExpenses}
+            netIncome={sankey.netIncome}
+            savingsRate={sankey.savingsRate}
           />
-        </Card>
+
+          <Card className="p-6 sm:p-8">
+            <p className="mb-4 font-mono text-[0.8125rem] text-linen-700">
+              {sankey.monthLabel}
+            </p>
+            <CashFlowSankey
+              nodes={sankey.nodes}
+              links={sankey.links}
+              totalIncome={sankey.totalIncome}
+            />
+          </Card>
+        </>
       ) : (
         <Card className="p-8 text-center">
           <p className="font-sans text-[0.9375rem] text-linen-700">
