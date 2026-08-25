@@ -151,7 +151,7 @@ async function getMonthSpendingRows(
         amount: personalAmount ?? originalAmount,
       };
     })
-    .filter((row) => row.amount > 0 && isSpendingCategory(row.category));
+    .filter((row) => row.originalAmount > 0 && isSpendingCategory(row.category));
 }
 
 function getTopCategoryKeys(rows: SpendingRow[], limit: number): string[] {
@@ -307,7 +307,7 @@ export async function getDayTransactions(
         amount: personalAmount ?? originalAmount,
       };
     })
-    .filter((row) => row.amount > 0 && isSpendingCategory(row.category));
+    .filter((row) => row.originalAmount > 0 && isSpendingCategory(row.category));
 
   const categoryKeysByCount = new Map<string, number>();
   for (const row of spendingRows) {
