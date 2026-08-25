@@ -107,7 +107,13 @@ export async function getCashFlowSankey(
     detailed: row.detailed,
   }));
 
-  const incomeRows = parsed.filter((row) => row.primary === "INCOME" && row.amount < 0);
+  const incomeRows = parsed.filter(
+    (row) =>
+      row.amount < 0 &&
+      (row.primary === "INCOME" ||
+        (row.primary === "TRANSFER_IN" &&
+          row.detailed === "TRANSFER_IN_TRANSFER_IN_FROM_APPS")),
+  );
   const spendingRows = parsed.filter((row) => row.amount > 0 && isSpendingCategory(row.primary));
 
   const totalIncome = incomeRows.reduce((sum, row) => sum + Math.abs(row.amount), 0);
@@ -142,7 +148,10 @@ export async function getCashFlowSankey(
 
   const incomeBySource = new Map<string, number>();
   for (const row of incomeRows) {
-    const label = detailLabel("INCOME", row.detailed);
+    const label =
+      row.primary === "TRANSFER_IN"
+        ? "From Friends & Family"
+        : detailLabel("INCOME", row.detailed);
     incomeBySource.set(label, (incomeBySource.get(label) ?? 0) + Math.abs(row.amount));
   }
   for (const [label, amount] of Array.from(incomeBySource.entries()).sort(
