@@ -43,6 +43,7 @@ const MONTH_NAMES = [
 
 const INDIGO = "var(--color-dye-indigo)";
 const MOSS = "var(--color-dye-moss)";
+const SUBCATEGORY_LIMIT = 3;
 
 function pad2(value: number): string {
   return value.toString().padStart(2, "0");
@@ -164,7 +165,7 @@ export async function getCashFlowSankey(
     }),
   );
   if (leftover > 0) {
-    groups.push({ key: "NET_INCOME", label: "Net Income", amount: leftover, isNetIncome: true });
+    groups.push({ key: "NET_INCOME", label: "Savings", amount: leftover, isNetIncome: true });
   }
   groups.sort((a, b) => b.amount - a.amount);
 
@@ -185,11 +186,18 @@ export async function getCashFlowSankey(
       byDetailed.set(label, (byDetailed.get(label) ?? 0) + row.amount);
     }
 
-    for (const [label, amount] of Array.from(byDetailed.entries()).sort(
-      (a, b) => b[1] - a[1],
-    )) {
+    const sortedDetailed = Array.from(byDetailed.entries()).sort((a, b) => b[1] - a[1]);
+    const topDetailed = sortedDetailed.slice(0, SUBCATEGORY_LIMIT);
+    const restDetailed = sortedDetailed.slice(SUBCATEGORY_LIMIT);
+    const otherAmount = restDetailed.reduce((sum, [, amount]) => sum + amount, 0);
+
+    for (const [label, amount] of topDetailed) {
       const subIdx = nodeFor(`sub:${group.key}:${label}`, label, color);
       links.push({ source: groupIdx, target: subIdx, value: amount });
+    }
+    if (otherAmount > 0) {
+      const subIdx = nodeFor(`sub:${group.key}:Other`, "Other", color);
+      links.push({ source: groupIdx, target: subIdx, value: otherAmount });
     }
   }
 

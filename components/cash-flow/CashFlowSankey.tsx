@@ -86,16 +86,19 @@ export function CashFlowSankey({ nodes, links, totalIncome }: CashFlowSankeyProp
     return () => cancelAnimationFrame(id);
   }, []);
 
+  const height = Math.max(640, nodes.length * 34);
+
   return (
     <div className="overflow-x-auto">
       <div
-        className={`chart-bloom h-[640px] min-w-[900px] ${bloomed ? "is-bloomed" : ""}`}
+        className={`chart-bloom min-w-[900px] ${bloomed ? "is-bloomed" : ""}`}
+        style={{ height }}
       >
         <ResponsiveContainer width="100%" height="100%">
           <Sankey
             data={{ nodes, links }}
             nodeWidth={14}
-            nodePadding={22}
+            nodePadding={30}
             margin={{ top: 8, right: 160, bottom: 8, left: 8 }}
             link={CashFlowLinkShape}
             node={makeNodeRenderer(totalIncome)}
