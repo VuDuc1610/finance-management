@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
               plaidTransactionId: transaction.transaction_id,
               name: transaction.name,
               amount: transaction.amount.toString(),
-              date: transaction.date,
+              date: transaction.authorized_date ?? transaction.date,
               pending: transaction.pending,
               personalFinanceCategoryPrimary:
                 transaction.personal_finance_category?.primary ?? null,
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
             .set({
               name: transaction.name,
               amount: transaction.amount.toString(),
-              date: transaction.date,
+              date: transaction.authorized_date ?? transaction.date,
               pending: transaction.pending,
               personalFinanceCategoryPrimary:
                 transaction.personal_finance_category?.primary ?? null,
