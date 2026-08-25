@@ -7,7 +7,7 @@ import {
   type SankeyLinkProps,
   type SankeyNodeProps,
 } from "recharts";
-import type { CashFlowLink, CashFlowNode } from "@/lib/mock-cash-flow-data";
+import type { CashFlowLink, CashFlowNode } from "@/lib/cash-flow";
 
 interface CashFlowSankeyProps {
   nodes: CashFlowNode[];
