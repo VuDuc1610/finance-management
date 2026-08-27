@@ -45,7 +45,7 @@ export function SpendingDonut({
   return (
     <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-center">
       <div
-        className={`chart-bloom relative h-64 w-64 shrink-0 ${bloomed ? "is-bloomed" : ""}`}
+        className={`chart-bloom relative h-64 w-64 shrink-0 sm:h-80 sm:w-80 lg:h-96 lg:w-96 ${bloomed ? "is-bloomed" : ""}`}
       >
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -78,10 +78,10 @@ export function SpendingDonut({
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="font-sans text-[0.8125rem] text-linen-700">
+          <span className="font-sans text-[0.8125rem] text-linen-700 sm:text-[0.9375rem]">
             Spent this {monthLabel}
           </span>
-          <span className="font-display text-[2rem] text-ink-900">
+          <span className="font-display text-[2rem] text-ink-900 sm:text-[2.5rem]">
             {currency.format(total)}
           </span>
         </div>

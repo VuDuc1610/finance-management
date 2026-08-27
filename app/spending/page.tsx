@@ -95,22 +95,22 @@ export default async function SpendingPage(props: PageProps<"/spending">) {
 
       {summary.categories.length > 0 ? (
         <>
-          <Card className="p-6 sm:p-8">
-            <SpendingDonut
-              data={summary.categories}
-              total={summary.total}
-              monthLabel={summary.monthLabel}
-              year={selected.year}
-              month={selected.month}
-            />
-          </Card>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+            <Card className="p-6 sm:p-8 lg:col-span-3">
+              <SpendingDonut
+                data={summary.categories}
+                total={summary.total}
+                monthLabel={summary.monthLabel}
+                year={selected.year}
+                month={selected.month}
+              />
+            </Card>
 
-          <div className="mt-6">
-            <Card className="p-6 sm:p-8">
+            <Card className="p-6 sm:p-8 lg:col-span-2">
               <h2 className="mb-4 font-sans text-[1.125rem] font-medium text-ink-900">
                 Spending Categories
               </h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4">
                 {summary.categories.map((category) => (
                   <CategoryCard
                     key={category.key}
