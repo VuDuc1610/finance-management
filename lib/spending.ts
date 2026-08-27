@@ -48,6 +48,8 @@ export interface SpendingSummary {
   monthLabel: string;
 }
 
+export type BillKind = "subscription" | "bill" | null;
+
 export interface CategoryTransaction {
   id: number;
   name: string;
@@ -56,6 +58,7 @@ export interface CategoryTransaction {
   personalAmount: number | null;
   date: string;
   pending: boolean;
+  billKind: BillKind;
 }
 
 export interface CategoryTransactionsResult {
@@ -119,6 +122,7 @@ interface SpendingRow {
   date: string;
   pending: boolean;
   category: string | null;
+  billKind: string | null;
 }
 
 async function getMonthSpendingRows(
@@ -136,6 +140,7 @@ async function getMonthSpendingRows(
       date: transactions.date,
       pending: transactions.pending,
       category: transactions.personalFinanceCategoryPrimary,
+      billKind: transactions.billKind,
     })
     .from(transactions)
     .where(and(gte(transactions.date, start), lt(transactions.date, end)));
@@ -253,6 +258,7 @@ export async function getCategoryTransactions(
       personalAmount: row.personalAmount,
       date: row.date,
       pending: row.pending,
+      billKind: row.billKind as BillKind,
     }))
     .sort((a, b) => b.date.localeCompare(a.date));
 
@@ -292,6 +298,7 @@ export async function getDayTransactions(
       date: transactions.date,
       pending: transactions.pending,
       category: transactions.personalFinanceCategoryPrimary,
+      billKind: transactions.billKind,
     })
     .from(transactions)
     .where(eq(transactions.date, date));
@@ -328,6 +335,7 @@ export async function getDayTransactions(
         personalAmount: row.personalAmount,
         date: row.date,
         pending: row.pending,
+        billKind: row.billKind as BillKind,
         categoryLabel: row.category ? labelForCategory(row.category) : "Other",
         color: dyeHueForIndex(index),
       };

@@ -68,6 +68,7 @@ export default async function DayTransactionsPage(
                 pending={transaction.pending}
                 categoryLabel={transaction.categoryLabel}
                 color={transaction.color}
+                billKind={transaction.billKind}
               />
             ))}
           </ul>

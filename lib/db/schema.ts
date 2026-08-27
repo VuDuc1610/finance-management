@@ -70,6 +70,8 @@ export const transactions = pgTable("transactions", {
   personalFinanceCategoryPrimary: text("personal_finance_category_primary"),
   personalFinanceCategoryDetailed: text("personal_finance_category_detailed"),
   isoCurrencyCode: text("iso_currency_code"),
+  billKind: text("bill_kind"),
+  dueDate: date("due_date"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

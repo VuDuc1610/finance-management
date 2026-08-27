@@ -72,6 +72,7 @@ export default async function CategoryTransactionsPage(
                 originalAmount={transaction.originalAmount}
                 personalAmount={transaction.personalAmount}
                 pending={transaction.pending}
+                billKind={transaction.billKind}
               />
             ))}
           </ul>

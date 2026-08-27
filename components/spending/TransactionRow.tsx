@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+
+type BillKind = "subscription" | "bill" | null;
 
 interface TransactionRowProps {
   id: number;
@@ -14,6 +16,7 @@ interface TransactionRowProps {
   categoryLabel?: string;
   color?: string;
   kind?: "expense" | "income";
+  billKind?: BillKind;
 }
 
 const currency = new Intl.NumberFormat("en-US", {
@@ -39,15 +42,28 @@ export function TransactionRow({
   categoryLabel,
   color,
   kind = "expense",
+  billKind = null,
 }: TransactionRowProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(Math.abs(personalAmount ?? originalAmount).toString());
   const [saving, setSaving] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const isAdjusted = personalAmount !== null;
   const sign = kind === "income" ? -1 : 1;
-  const editLabel = kind === "income" ? "Not mine" : "Split";
+  const splitLabel = kind === "income" ? "Not mine" : "Split amount";
   const fullAmountLabel = kind === "income" ? "Full transfer" : "Full charge";
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   async function save(magnitude: number | null) {
     setSaving(true);
@@ -61,6 +77,25 @@ export function TransactionRow({
       });
       router.refresh();
       setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function selectBillKind(next: BillKind) {
+    setMenuOpen(false);
+    if (next === billKind) return;
+    setSaving(true);
+    try {
+      await fetch(`/api/transactions/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          billKind: next,
+          ...(next !== null && billKind === null ? { dueDate: date } : {}),
+        }),
+      });
+      router.refresh();
     } finally {
       setSaving(false);
     }
@@ -92,6 +127,11 @@ export function TransactionRow({
       {isAdjusted && !editing && (
         <span className="shrink-0 rounded-pill border border-dye-saffron px-2 py-0.5 font-sans text-[0.6875rem] text-dye-saffron">
           Adjusted
+        </span>
+      )}
+      {billKind && (
+        <span className="shrink-0 rounded-pill border border-dye-indigo px-2 py-0.5 font-sans text-[0.6875rem] text-dye-indigo">
+          {billKind === "subscription" ? "Subscription" : "Bill"}
         </span>
       )}
     </div>
@@ -152,26 +192,86 @@ export function TransactionRow({
           {kind === "income" ? "+" : "-"}
           {currency.format(amount)}
         </span>
-        <button
-          type="button"
-          onClick={() => {
-            setValue(Math.abs(personalAmount ?? originalAmount).toString());
-            setEditing(true);
-          }}
-          className="font-sans text-[0.75rem] text-linen-700 underline hover:text-ink-900"
-        >
-          {isAdjusted ? "Edit" : editLabel}
-        </button>
-        {isAdjusted && (
+        <div ref={menuRef} className="relative">
           <button
             type="button"
             disabled={saving}
-            onClick={() => save(null)}
-            className="font-sans text-[0.75rem] text-linen-700 underline hover:text-ink-900 disabled:opacity-50"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            aria-label="Transaction actions"
+            className="flex h-6 w-6 items-center justify-center rounded-full text-linen-700 hover:bg-linen-300/30 hover:text-ink-900 disabled:opacity-50"
           >
-            Reset
+            ⋮
           </button>
-        )}
+          {menuOpen && (
+            <ul className="absolute right-0 z-10 mt-1 w-44 overflow-hidden rounded-card border border-linen-300 bg-linen-100 py-1">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setValue(Math.abs(personalAmount ?? originalAmount).toString());
+                    setEditing(true);
+                  }}
+                  className="block w-full px-3 py-1.5 text-left font-sans text-[0.75rem] text-linen-700 hover:bg-linen-300/30 hover:text-ink-900"
+                >
+                  {isAdjusted ? "Edit split" : splitLabel}
+                </button>
+              </li>
+              {isAdjusted && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      save(null);
+                    }}
+                    className="block w-full px-3 py-1.5 text-left font-sans text-[0.75rem] text-linen-700 hover:bg-linen-300/30 hover:text-ink-900"
+                  >
+                    Reset to full amount
+                  </button>
+                </li>
+              )}
+              {kind === "expense" && (
+                <>
+                  <li aria-hidden className="my-1 h-px bg-linen-300" />
+                  {billKind !== "subscription" && (
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => selectBillKind("subscription")}
+                        className="block w-full px-3 py-1.5 text-left font-sans text-[0.75rem] text-linen-700 hover:bg-linen-300/30 hover:text-ink-900"
+                      >
+                        Tag as Subscription
+                      </button>
+                    </li>
+                  )}
+                  {billKind !== "bill" && (
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => selectBillKind("bill")}
+                        className="block w-full px-3 py-1.5 text-left font-sans text-[0.75rem] text-linen-700 hover:bg-linen-300/30 hover:text-ink-900"
+                      >
+                        Tag as Bill
+                      </button>
+                    </li>
+                  )}
+                  {billKind !== null && (
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => selectBillKind(null)}
+                        className="block w-full px-3 py-1.5 text-left font-sans text-[0.75rem] text-linen-700 hover:bg-linen-300/30 hover:text-ink-900"
+                      >
+                        Remove tag
+                      </button>
+                    </li>
+                  )}
+                </>
+              )}
+            </ul>
+          )}
+        </div>
       </div>
     </li>
   );
