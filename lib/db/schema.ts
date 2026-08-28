@@ -75,3 +75,12 @@ export const transactions = pgTable("transactions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const chatMessages = pgTable("chat_messages", {
+  id: serial("id").primaryKey(),
+  role: text("role").notNull(), // "user" | "model" | "tool"
+  content: text("content").notNull(),
+  toolName: text("tool_name"),
+  toolArgs: text("tool_args"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
