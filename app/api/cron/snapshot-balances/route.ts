@@ -55,9 +55,14 @@ export async function GET(request: NextRequest) {
         snapshotCount += 1;
       }
     } catch (err) {
+      const response = (err as { response?: { status?: number; data?: unknown } })
+        ?.response;
       console.error(
         "cron/snapshot-balances item failed:",
-        err instanceof Error ? err.name : "unknown error",
+        item.institutionName,
+        response?.status,
+        JSON.stringify(response?.data) ??
+          (err instanceof Error ? err.message : "unknown error"),
       );
       failedItems.push({ id: item.id, institutionName: item.institutionName });
     }
