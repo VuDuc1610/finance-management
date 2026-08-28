@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@google/genai": "^2.19.0",
     "drizzle-orm": "^0.45.2",
     "next": "16.3.2",
     "plaid": "^46.0.0",
