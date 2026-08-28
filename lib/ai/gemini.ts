@@ -78,7 +78,15 @@ export async function runChat(userMessage: string): Promise<string> {
     for (const call of response.functionCalls) {
       const name = call.name ?? "unknown";
       const args = (call.args ?? {}) as Record<string, unknown>;
-      const result = await executeTool(name, args);
+
+      let result: unknown;
+      try {
+        result = await executeTool(name, args);
+      } catch (error) {
+        result = {
+          error: String(error instanceof Error ? error.message : error),
+        };
+      }
 
       await db.insert(chatMessages).values({
         role: "tool",
