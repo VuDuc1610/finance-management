@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Karla, IBM_Plex_Mono } from "next/font/google";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
+import { AdvisorChat } from "@/components/chat/AdvisorChat";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Sidebar />
           <div className="ml-16 flex min-w-0 flex-1 flex-col">{children}</div>
         </div>
+        <AdvisorChat />
       </body>
     </html>
   );
