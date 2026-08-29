@@ -4,33 +4,34 @@ export default function LandingPage() {
   return (
     <main className="w-full">
       <div className="mx-auto max-w-6xl px-6 md:px-10">
-        <header className="flex items-center justify-between py-7">
-          <span className="font-display text-[1.125rem] tracking-tight text-ink-900">
-            zen linen
-          </span>
-          <nav className="flex items-center gap-8">
-            <a
-              href="#how"
-              className="font-sans text-[0.9375rem] text-linen-700 transition hover:text-ink-900"
-            >
-              How it works
-            </a>
+        <header className="sticky top-4 z-50 flex justify-center py-3">
+          <div className="flex w-fit items-center gap-6 rounded-pill bg-ink-900 py-2 pr-2 pl-4 shadow-lg shadow-ink-900/25">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-linen-100 font-display text-[0.8125rem] text-ink-900">
+                z
+              </span>
+              <span className="font-display text-[1rem] tracking-tight text-linen-100">
+                zen linen
+              </span>
+            </div>
+            <nav className="flex items-center gap-6">
+              <a
+                href="#how"
+                className="font-sans text-[0.875rem] text-linen-300 transition hover:text-linen-100"
+              >
+                How it works
+              </a>
+            </nav>
             <Link
               href="/auth"
-              className="font-sans text-[0.9375rem] text-linen-700 transition hover:text-ink-900"
+              className="rounded-pill bg-linen-100 px-5 py-2 font-sans text-[0.875rem] text-ink-900 transition hover:opacity-90"
             >
               Log in
             </Link>
-            <Link
-              href="/auth"
-              className="rounded-pill bg-gradient-to-r from-dye-indigo to-dye-madder px-5 py-2.5 font-sans text-[0.9375rem] text-linen-100 transition hover:opacity-90"
-            >
-              Sign up
-            </Link>
-          </nav>
+          </div>
         </header>
 
-        <section className="grid grid-cols-1 items-center gap-14 py-16 sm:py-20 lg:grid-cols-[6fr_5fr] lg:gap-16 lg:py-24">
+        <section className="grid grid-cols-1 items-center gap-14 pt-8 pb-16 sm:pb-20 lg:grid-cols-[6fr_5fr] lg:gap-16 lg:pt-12 lg:pb-24">
           <div>
             <span className="mb-6 inline-block font-mono text-[0.8125rem] tracking-[0.14em] text-linen-700">
               PERSONAL FINANCE, QUIETLY
