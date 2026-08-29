@@ -5,7 +5,7 @@ export default function LandingPage() {
     <main className="w-full">
       <div className="mx-auto max-w-6xl px-6 md:px-10">
         <header className="sticky top-4 z-50 flex justify-center py-3">
-          <div className="flex w-fit items-center gap-6 rounded-pill bg-ink-900 py-2 pr-2 pl-4 shadow-lg shadow-ink-900/25">
+          <div className="flex w-full max-w-2xl items-center justify-between gap-6 rounded-pill bg-ink-900 py-2 pr-2 pl-5 shadow-lg shadow-ink-900/25">
             <div className="flex items-center gap-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-linen-100 font-display text-[0.8125rem] text-ink-900">
                 z
@@ -14,7 +14,7 @@ export default function LandingPage() {
                 zen linen
               </span>
             </div>
-            <nav className="flex items-center gap-6">
+            <nav className="hidden items-center gap-8 sm:flex">
               <a
                 href="#how"
                 className="font-sans text-[0.875rem] text-linen-300 transition hover:text-linen-100"
@@ -22,12 +22,20 @@ export default function LandingPage() {
                 How it works
               </a>
             </nav>
-            <Link
-              href="/auth"
-              className="rounded-pill bg-linen-100 px-5 py-2 font-sans text-[0.875rem] text-ink-900 transition hover:opacity-90"
-            >
-              Log in
-            </Link>
+            <div className="flex items-center gap-0.5 rounded-pill bg-linen-100 p-1">
+              <Link
+                href="/auth"
+                className="rounded-pill px-4 py-1.5 font-sans text-[0.875rem] text-ink-900 transition hover:bg-linen-300/60"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/auth"
+                className="rounded-pill bg-ink-900 px-4 py-1.5 font-sans text-[0.875rem] text-linen-100 transition hover:opacity-90"
+              >
+                Sign up
+              </Link>
+            </div>
           </div>
         </header>
 
