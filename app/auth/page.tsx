@@ -1,21 +1,72 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
+import { createClient } from "@/lib/supabase/client";
 
 export default function AuthPage() {
+  const router = useRouter();
+  const supabase = createClient();
+
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
+
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
+  const [signupError, setSignupError] = useState<string | null>(null);
+  const [signupLoading, setSignupLoading] = useState(false);
+  const [signupConfirmationSent, setSignupConfirmationSent] = useState(false);
 
-  function handleLogin(event: React.FormEvent) {
+  async function handleLogin(event: React.FormEvent) {
     event.preventDefault();
+    setLoginError(null);
+    setLoginLoading(true);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: loginEmail,
+      password: loginPassword,
+    });
+
+    setLoginLoading(false);
+
+    if (error) {
+      setLoginError(error.message);
+      return;
+    }
+
+    router.push("/home");
+    router.refresh();
   }
 
-  function handleSignup(event: React.FormEvent) {
+  async function handleSignup(event: React.FormEvent) {
     event.preventDefault();
+    setSignupError(null);
+    setSignupLoading(true);
+
+    const { data, error } = await supabase.auth.signUp({
+      email: signupEmail,
+      password: signupPassword,
+      options: { data: { full_name: signupName } },
+    });
+
+    setSignupLoading(false);
+
+    if (error) {
+      setSignupError(error.message);
+      return;
+    }
+
+    if (data.session) {
+      router.push("/home");
+      router.refresh();
+      return;
+    }
+
+    setSignupConfirmationSent(true);
   }
 
   return (
@@ -59,11 +110,18 @@ export default function AuthPage() {
                 />
               </label>
 
+              {loginError && (
+                <p className="font-sans text-[0.8125rem] text-dye-madder">
+                  {loginError}
+                </p>
+              )}
+
               <button
                 type="submit"
-                className="mt-2 rounded-pill bg-dye-indigo px-4 py-2.5 font-sans text-[0.9375rem] text-linen-100 transition hover:opacity-90"
+                disabled={loginLoading}
+                className="mt-2 rounded-pill bg-dye-indigo px-4 py-2.5 font-sans text-[0.9375rem] text-linen-100 transition hover:opacity-90 disabled:opacity-60"
               >
-                Log in
+                {loginLoading ? "Logging in…" : "Log in"}
               </button>
             </form>
           </section>
@@ -94,53 +152,66 @@ export default function AuthPage() {
               </p>
             </div>
 
-            <form onSubmit={handleSignup} className="flex flex-col gap-4">
-              <label className="flex flex-col gap-1.5">
-                <span className="font-sans text-[0.8125rem] text-linen-700">
-                  Name
-                </span>
-                <input
-                  type="text"
-                  value={signupName}
-                  onChange={(event) => setSignupName(event.target.value)}
-                  placeholder="Jane Doe"
-                  className="rounded-card border border-linen-300 bg-linen-100 px-3.5 py-2.5 font-sans text-[0.9375rem] text-ink-900 placeholder:text-linen-700 focus-visible:outline-2 focus-visible:outline-dye-indigo"
-                />
-              </label>
+            {signupConfirmationSent ? (
+              <p className="font-sans text-[0.9375rem] text-linen-700">
+                Check your email to confirm your account, then log in.
+              </p>
+            ) : (
+              <form onSubmit={handleSignup} className="flex flex-col gap-4">
+                <label className="flex flex-col gap-1.5">
+                  <span className="font-sans text-[0.8125rem] text-linen-700">
+                    Name
+                  </span>
+                  <input
+                    type="text"
+                    value={signupName}
+                    onChange={(event) => setSignupName(event.target.value)}
+                    placeholder="Jane Doe"
+                    className="rounded-card border border-linen-300 bg-linen-100 px-3.5 py-2.5 font-sans text-[0.9375rem] text-ink-900 placeholder:text-linen-700 focus-visible:outline-2 focus-visible:outline-dye-indigo"
+                  />
+                </label>
 
-              <label className="flex flex-col gap-1.5">
-                <span className="font-sans text-[0.8125rem] text-linen-700">
-                  Email
-                </span>
-                <input
-                  type="email"
-                  value={signupEmail}
-                  onChange={(event) => setSignupEmail(event.target.value)}
-                  placeholder="you@example.com"
-                  className="rounded-card border border-linen-300 bg-linen-100 px-3.5 py-2.5 font-sans text-[0.9375rem] text-ink-900 placeholder:text-linen-700 focus-visible:outline-2 focus-visible:outline-dye-indigo"
-                />
-              </label>
+                <label className="flex flex-col gap-1.5">
+                  <span className="font-sans text-[0.8125rem] text-linen-700">
+                    Email
+                  </span>
+                  <input
+                    type="email"
+                    value={signupEmail}
+                    onChange={(event) => setSignupEmail(event.target.value)}
+                    placeholder="you@example.com"
+                    className="rounded-card border border-linen-300 bg-linen-100 px-3.5 py-2.5 font-sans text-[0.9375rem] text-ink-900 placeholder:text-linen-700 focus-visible:outline-2 focus-visible:outline-dye-indigo"
+                  />
+                </label>
 
-              <label className="flex flex-col gap-1.5">
-                <span className="font-sans text-[0.8125rem] text-linen-700">
-                  Password
-                </span>
-                <input
-                  type="password"
-                  value={signupPassword}
-                  onChange={(event) => setSignupPassword(event.target.value)}
-                  placeholder="••••••••"
-                  className="rounded-card border border-linen-300 bg-linen-100 px-3.5 py-2.5 font-sans text-[0.9375rem] text-ink-900 placeholder:text-linen-700 focus-visible:outline-2 focus-visible:outline-dye-indigo"
-                />
-              </label>
+                <label className="flex flex-col gap-1.5">
+                  <span className="font-sans text-[0.8125rem] text-linen-700">
+                    Password
+                  </span>
+                  <input
+                    type="password"
+                    value={signupPassword}
+                    onChange={(event) => setSignupPassword(event.target.value)}
+                    placeholder="••••••••"
+                    className="rounded-card border border-linen-300 bg-linen-100 px-3.5 py-2.5 font-sans text-[0.9375rem] text-ink-900 placeholder:text-linen-700 focus-visible:outline-2 focus-visible:outline-dye-indigo"
+                  />
+                </label>
 
-              <button
-                type="submit"
-                className="mt-2 rounded-pill border border-dye-indigo px-4 py-2.5 font-sans text-[0.9375rem] text-dye-indigo transition hover:bg-dye-indigo hover:text-linen-100"
-              >
-                Create account
-              </button>
-            </form>
+                {signupError && (
+                  <p className="font-sans text-[0.8125rem] text-dye-madder">
+                    {signupError}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={signupLoading}
+                  className="mt-2 rounded-pill border border-dye-indigo px-4 py-2.5 font-sans text-[0.9375rem] text-dye-indigo transition hover:bg-dye-indigo hover:text-linen-100 disabled:opacity-60"
+                >
+                  {signupLoading ? "Creating account…" : "Create account"}
+                </button>
+              </form>
+            )}
           </section>
         </div>
       </Card>
