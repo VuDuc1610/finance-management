@@ -58,17 +58,18 @@ export function AdvisorChat() {
         body: JSON.stringify({ message: text }),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        throw new Error("Request failed");
+        throw new Error(typeof data.error === "string" ? data.error : "Request failed");
       }
 
-      const data = await res.json();
       setMessages((prev) => [
         ...prev,
         { id: messageIdRef.current++, role: "model", content: data.reply },
       ]);
-    } catch {
-      setError("Something went wrong — try again.");
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : "Something went wrong — try again.");
     } finally {
       setIsSending(false);
     }

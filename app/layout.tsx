@@ -35,11 +35,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${fraunces.variable} ${karla.variable} ${plexMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">
+      <body className="flex h-full flex-col overflow-hidden">
         <TopBar />
-        <div className="relative flex flex-1">
+        <div className="relative flex min-h-0 flex-1">
           <Sidebar />
-          <div className="ml-16 flex min-w-0 flex-1 flex-col">{children}</div>
+          <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">{children}</div>
         </div>
         <AdvisorChat />
       </body>

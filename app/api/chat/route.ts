@@ -22,6 +22,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ reply });
   } catch (error) {
     console.error("Chat error:", error);
+
+    const isOverloaded =
+      error instanceof Error &&
+      (error.message.includes('"code":503') || error.message.includes("UNAVAILABLE"));
+
+    if (isOverloaded) {
+      return NextResponse.json(
+        { error: "The advisor is experiencing high demand right now. Please try again in a moment." },
+        { status: 503 },
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to get a response from the advisor" },
       { status: 500 },

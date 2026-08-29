@@ -13,7 +13,7 @@ export function TopBar() {
           type="button"
           className="rounded-pill border border-dye-indigo px-4 py-1.5 font-sans text-[0.875rem] text-dye-indigo hover:bg-dye-indigo/10"
         >
-          Manage accounts
+          Sign up
         </button>
       </div>
     </header>

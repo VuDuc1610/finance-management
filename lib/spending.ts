@@ -1,6 +1,6 @@
 import { and, eq, gte, lt } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { plaidItems, transactions } from "@/lib/db/schema";
+import { accounts, plaidItems, transactions } from "@/lib/db/schema";
 import {
   dyeHueForIndex,
   isSpendingCategory,
@@ -81,6 +81,34 @@ export interface DayTransactionsResult {
   transactions: DayTransaction[];
   total: number;
   dateLabel: string;
+}
+
+export interface MonthTransaction {
+  id: number;
+  name: string;
+  amount: number;
+  kind: "expense" | "income";
+  originalAmount: number;
+  personalAmount: number | null;
+  date: string;
+  pending: boolean;
+  billKind: BillKind;
+  categoryLabel: string;
+  color: string;
+  accountLabel: string;
+}
+
+export interface DateGroup {
+  date: string;
+  dateLabel: string;
+  netAmount: number;
+  transactions: MonthTransaction[];
+}
+
+export interface MonthTransactionsResult {
+  groups: DateGroup[];
+  all: MonthTransaction[];
+  monthLabel: string;
 }
 
 const OTHER_KEY = "OTHER";
@@ -350,4 +378,99 @@ export async function getDayTransactions(
     total,
     dateLabel: `${MONTH_NAMES[month - 1]} ${day}, ${year}`,
   };
+}
+
+export async function getMonthTransactions(
+  year: number,
+  month: number,
+): Promise<MonthTransactionsResult> {
+  const { start, end } = monthRange(year, month);
+
+  const rows = await db
+    .select({
+      id: transactions.id,
+      name: transactions.name,
+      amount: transactions.amount,
+      personalAmount: transactions.personalAmount,
+      date: transactions.date,
+      pending: transactions.pending,
+      category: transactions.personalFinanceCategoryPrimary,
+      billKind: transactions.billKind,
+      accountName: accounts.name,
+      accountMask: accounts.mask,
+    })
+    .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .where(and(gte(transactions.date, start), lt(transactions.date, end)));
+
+  const categoryKeysByCount = new Map<string, number>();
+  for (const row of rows) {
+    const key = row.category ?? OTHER_KEY;
+    categoryKeysByCount.set(key, (categoryKeysByCount.get(key) ?? 0) + 1);
+  }
+  const keyOrder = Array.from(categoryKeysByCount.keys());
+
+  const monthTransactions: MonthTransaction[] = rows.map((row) => {
+    const originalAmount = Number(row.amount);
+    const personalAmount =
+      row.personalAmount === null ? null : Number(row.personalAmount);
+    const amount = Math.abs(personalAmount ?? originalAmount);
+    const key = row.category ?? OTHER_KEY;
+    const index = keyOrder.indexOf(key);
+
+    return {
+      id: row.id,
+      name: row.name,
+      amount,
+      kind: originalAmount > 0 ? "expense" : "income",
+      originalAmount,
+      personalAmount,
+      date: row.date,
+      pending: row.pending,
+      billKind: row.billKind as BillKind,
+      categoryLabel: row.category ? labelForCategory(row.category) : "Other",
+      color: dyeHueForIndex(index),
+      accountLabel: row.accountMask
+        ? `${row.accountName} (...${row.accountMask})`
+        : row.accountName,
+    };
+  });
+
+  return {
+    groups: groupTransactionsByDate(monthTransactions),
+    all: monthTransactions
+      .slice()
+      .sort((a, b) => b.date.localeCompare(a.date)),
+    monthLabel: MONTH_NAMES[month - 1],
+  };
+}
+
+export function groupTransactionsByDate(
+  transactionList: MonthTransaction[],
+): DateGroup[] {
+  const byDate = new Map<string, MonthTransaction[]>();
+  for (const t of transactionList) {
+    const list = byDate.get(t.date);
+    if (list) {
+      list.push(t);
+    } else {
+      byDate.set(t.date, [t]);
+    }
+  }
+
+  return Array.from(byDate.entries())
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([date, dateTransactions]) => {
+      const sorted = dateTransactions
+        .slice()
+        .sort((a, b) => b.originalAmount - a.originalAmount);
+      const netAmount = sorted.reduce((sum, t) => sum + t.originalAmount, 0);
+      const [y, m, d] = date.split("-").map(Number);
+      return {
+        date,
+        dateLabel: `${MONTH_NAMES[m - 1]} ${d}, ${y}`,
+        netAmount,
+        transactions: sorted,
+      };
+    });
 }

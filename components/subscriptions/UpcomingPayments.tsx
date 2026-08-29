@@ -22,40 +22,40 @@ export function UpcomingPayments({ items }: UpcomingPaymentsProps) {
 
   if (upcoming.length === 0) {
     return (
-      <p className="font-sans text-[0.9375rem] text-linen-700">
+      <p className="font-sans text-[1rem] text-linen-700">
         Nothing due in the next 5 days.
       </p>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-3">
+    <div className="grid grid-cols-1 gap-4">
       {upcoming.map((item) => {
         const badge = getDueBadge(item.dueDate);
         return (
           <div
             key={item.id}
-            className="flex items-center justify-between gap-3 rounded-card border border-linen-300 px-4 py-3"
+            className="flex items-center justify-between gap-3 rounded-card border border-linen-300 px-5 py-4"
           >
             <div className="flex items-center gap-3">
               <span
-                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                className="h-3 w-3 shrink-0 rounded-full"
                 style={{ backgroundColor: item.color }}
                 aria-hidden="true"
               />
               <div>
-                <p className="font-sans text-[0.9375rem] text-ink-900">{item.name}</p>
-                <p className="font-sans text-[0.8125rem] text-linen-700">
+                <p className="font-sans text-[1.0625rem] text-ink-900">{item.name}</p>
+                <p className="font-sans text-[0.9375rem] text-linen-700">
                   {item.category}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-[0.9375rem] text-ink-900">
+              <span className="font-mono text-[1.0625rem] text-ink-900">
                 {currency.format(item.amount)}
               </span>
               <span
-                className={`rounded-full px-2.5 py-0.5 font-mono text-[0.75rem] ${badge.className}`}
+                className={`rounded-full px-2.5 py-0.5 font-mono text-[0.8125rem] ${badge.className}`}
               >
                 {badge.label}
               </span>
