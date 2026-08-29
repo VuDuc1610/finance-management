@@ -22,8 +22,16 @@ export function AdvisorChat() {
     if (!isOpen || hasLoadedHistory) return;
 
     fetch("/api/chat")
-      .then((res) => res.json())
-      .then((data) => setMessages(data.messages))
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Request failed");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setMessages(data.messages);
+        messageIdRef.current = Math.max(0, ...data.messages.map((m: ChatMessage) => m.id));
+      })
       .catch(() => {
         setError("Failed to load chat history.");
       })

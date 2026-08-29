@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { loadVisibleHistory, runChat } from "@/lib/ai/gemini";
 
+export const maxDuration = 60;
+
 // Chat API route handler
 export async function GET() {
   const messages = await loadVisibleHistory();
