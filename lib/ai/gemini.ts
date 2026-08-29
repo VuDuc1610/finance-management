@@ -52,7 +52,12 @@ async function loadGeminiHistory() {
 }
 
 export async function runChat(userMessage: string): Promise<string> {
+  const callId = Math.random().toString(36).slice(2, 8);
+  const t0 = Date.now();
+  console.log(`[chat ${callId}] start, message="${userMessage.slice(0, 80)}"`);
+
   const history = await loadGeminiHistory();
+  console.log(`[chat ${callId}] loaded history: ${history.length} turns`);
 
   const chat = ai.chats.create({
     model: MODEL,
@@ -65,7 +70,12 @@ export async function runChat(userMessage: string): Promise<string> {
 
   await db.insert(chatMessages).values({ role: "user", content: userMessage });
 
+  console.log(`[chat ${callId}] sending initial message to Gemini (model=${MODEL})...`);
+  let sendT0 = Date.now();
   let response = await chat.sendMessage({ message: userMessage });
+  console.log(
+    `[chat ${callId}] initial response in ${Date.now() - sendT0}ms, functionCalls=${response.functionCalls?.length ?? 0}`,
+  );
   let iterations = 0;
 
   while (
@@ -79,13 +89,19 @@ export async function runChat(userMessage: string): Promise<string> {
       const name = call.name ?? "unknown";
       const args = (call.args ?? {}) as Record<string, unknown>;
 
+      console.log(`[chat ${callId}] iter ${iterations}: executing tool "${name}" args=${JSON.stringify(args)}`);
+      const toolT0 = Date.now();
       let result: unknown;
       try {
         result = await executeTool(name, args);
+        console.log(`[chat ${callId}] iter ${iterations}: tool "${name}" succeeded in ${Date.now() - toolT0}ms`);
       } catch (error) {
         result = {
           error: String(error instanceof Error ? error.message : error),
         };
+        console.log(
+          `[chat ${callId}] iter ${iterations}: tool "${name}" FAILED in ${Date.now() - toolT0}ms: ${String(error)}`,
+        );
       }
 
       await db.insert(chatMessages).values({
@@ -100,12 +116,23 @@ export async function runChat(userMessage: string): Promise<string> {
       });
     }
 
+    console.log(`[chat ${callId}] iter ${iterations}: sending tool results back to Gemini...`);
+    sendT0 = Date.now();
     response = await chat.sendMessage({ message: functionResponseParts });
+    console.log(
+      `[chat ${callId}] iter ${iterations}: follow-up response in ${Date.now() - sendT0}ms, functionCalls=${response.functionCalls?.length ?? 0}`,
+    );
     iterations += 1;
+  }
+
+  if (iterations >= MAX_TOOL_ITERATIONS) {
+    console.log(`[chat ${callId}] hit MAX_TOOL_ITERATIONS (${MAX_TOOL_ITERATIONS}) without a final text reply`);
   }
 
   const replyText = response.text ?? "I couldn't come up with an answer for that.";
   await db.insert(chatMessages).values({ role: "model", content: replyText });
+
+  console.log(`[chat ${callId}] done in ${Date.now() - t0}ms total, ${iterations} tool iteration(s)`);
 
   return replyText;
 }
