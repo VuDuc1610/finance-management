@@ -16,6 +16,7 @@ export function AdvisorChat() {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messageIdRef = useRef(0);
 
   useEffect(() => {
     if (!isOpen || hasLoadedHistory) return;
@@ -23,6 +24,9 @@ export function AdvisorChat() {
     fetch("/api/chat")
       .then((res) => res.json())
       .then((data) => setMessages(data.messages))
+      .catch(() => {
+        setError("Failed to load chat history.");
+      })
       .finally(() => setHasLoadedHistory(true));
   }, [isOpen, hasLoadedHistory]);
 
@@ -34,7 +38,7 @@ export function AdvisorChat() {
     const text = input.trim();
     if (!text || isSending) return;
 
-    setMessages((prev) => [...prev, { id: Date.now(), role: "user", content: text }]);
+    setMessages((prev) => [...prev, { id: messageIdRef.current++, role: "user", content: text }]);
     setInput("");
     setIsSending(true);
     setError(null);
@@ -53,7 +57,7 @@ export function AdvisorChat() {
       const data = await res.json();
       setMessages((prev) => [
         ...prev,
-        { id: Date.now() + 1, role: "model", content: data.reply },
+        { id: messageIdRef.current++, role: "model", content: data.reply },
       ]);
     } catch {
       setError("Something went wrong — try again.");
@@ -103,6 +107,7 @@ export function AdvisorChat() {
           <div className="flex gap-2 border-t border-linen-300 p-3">
             <input
               type="text"
+              aria-label="Message input"
               value={input}
               onChange={(event) => setInput(event.target.value)}
               onKeyDown={(event) => {
