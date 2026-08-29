@@ -11,7 +11,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isLanding = pathname === "/";
 
   if (isLanding) {
-    return <>{children}</>;
+    return (
+      <>
+        <TopBar />
+        {children}
+      </>
+    );
   }
 
   return (
