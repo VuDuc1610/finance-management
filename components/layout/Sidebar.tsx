@@ -72,7 +72,7 @@ function ManageAccountsIcon(props: SVGProps<SVGSVGElement>) {
 
 const links = [
   { href: "/home", label: "Home", Icon: HomeIcon },
-  { href: "/", label: "Net worth", Icon: NetWorthIcon },
+  { href: "/dashboard", label: "Net worth", Icon: NetWorthIcon },
   { href: "/spending", label: "Spending", Icon: SpendingIcon },
   { href: "/transactions", label: "Transactions", Icon: TransactionsIcon },
   { href: "/cash-flow", label: "Cash flow", Icon: CashFlowIcon },

@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Karla, IBM_Plex_Mono } from "next/font/google";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { TopBar } from "@/components/layout/TopBar";
-import { AdvisorChat } from "@/components/chat/AdvisorChat";
+import { AppShell } from "@/components/layout/AppShell";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -35,13 +33,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${fraunces.variable} ${karla.variable} ${plexMono.variable} h-full antialiased`}
     >
-      <body className="flex h-full flex-col overflow-hidden">
-        <TopBar />
-        <div className="relative flex min-h-0 flex-1">
-          <Sidebar />
-          <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">{children}</div>
-        </div>
-        <AdvisorChat />
+      <body className="antialiased">
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
