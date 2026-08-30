@@ -8,9 +8,9 @@ import { AdvisorChat } from "@/components/chat/AdvisorChat";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isLanding = pathname === "/";
+  const isChromeless = pathname === "/" || pathname === "/auth";
 
-  if (isLanding) {
+  if (isChromeless) {
     return (
       <>
         <TopBar />
