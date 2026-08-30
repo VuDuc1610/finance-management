@@ -35,7 +35,9 @@ export function TopBar() {
       <div className="flex items-center gap-5">
         {user ? (
           <>
-            <span className="font-sans text-[1rem] text-linen-700">{user.email}</span>
+            <span className="font-sans text-[1rem] text-linen-700">
+              {user.user_metadata?.full_name || user.email}
+            </span>
             <button
               type="button"
               onClick={handleSignOut}
