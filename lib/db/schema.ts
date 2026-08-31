@@ -8,11 +8,12 @@ import {
   timestamp,
   unique,
   boolean,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 
 export const plaidItems = pgTable("plaid_items", {
   id: serial("id").primaryKey(),
-  userId: text("user_id"),
+  userId: text("user_id").notNull(),
   institutionName: text("institution_name").notNull(),
   plaidItemId: text("plaid_item_id").notNull().unique(),
   accessToken: text("access_token").notNull(),
@@ -80,15 +81,18 @@ export const transactions = pgTable("transactions", {
 export const dismissedSubscriptionSuggestions = pgTable(
   "dismissed_subscription_suggestions",
   {
-    userId: text("user_id"),
+    userId: text("user_id").notNull(),
     name: text("name").notNull(),
     dismissedAt: timestamp("dismissed_at").notNull().defaultNow(),
   },
+  (table) => ({
+    pk: primaryKey({ columns: [table.userId, table.name] }),
+  }),
 );
 
 export const chatMessages = pgTable("chat_messages", {
   id: serial("id").primaryKey(),
-  userId: text("user_id"),
+  userId: text("user_id").notNull(),
   role: text("role").notNull(), // "user" | "model" | "tool"
   content: text("content").notNull(),
   toolName: text("tool_name"),
