@@ -17,16 +17,21 @@ export interface ItemNeedingReconnect {
   institutionName: string;
 }
 
-export async function getItemsNeedingReconnect(): Promise<
-  ItemNeedingReconnect[]
-> {
+export async function getItemsNeedingReconnect(
+  userId: string,
+): Promise<ItemNeedingReconnect[]> {
   const rows = await db
     .select({
       id: plaidItems.id,
       institutionName: plaidItems.institutionName,
     })
     .from(plaidItems)
-    .where(eq(plaidItems.transactionsConsentMissing, true));
+    .where(
+      and(
+        eq(plaidItems.transactionsConsentMissing, true),
+        eq(plaidItems.userId, userId),
+      ),
+    );
 
   return rows.map((row) => ({
     itemId: row.id,
@@ -154,6 +159,7 @@ interface SpendingRow {
 }
 
 async function getMonthSpendingRows(
+  userId: string,
   year: number,
   month: number,
 ): Promise<SpendingRow[]> {
@@ -171,7 +177,15 @@ async function getMonthSpendingRows(
       billKind: transactions.billKind,
     })
     .from(transactions)
-    .where(and(gte(transactions.date, start), lt(transactions.date, end)));
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id))
+    .where(
+      and(
+        gte(transactions.date, start),
+        lt(transactions.date, end),
+        eq(plaidItems.userId, userId),
+      ),
+    );
 
   return rows
     .map((row) => {
@@ -199,8 +213,13 @@ function getTopCategoryKeys(rows: SpendingRow[], limit: number): string[] {
     .map(([key]) => key);
 }
 
-export async function getAvailableMonths(): Promise<SpendingMonth[]> {
-  const rows = await db.select({ date: transactions.date }).from(transactions);
+export async function getAvailableMonths(userId: string): Promise<SpendingMonth[]> {
+  const rows = await db
+    .select({ date: transactions.date })
+    .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id))
+    .where(eq(plaidItems.userId, userId));
 
   const seen = new Set<string>();
   for (const row of rows) {
@@ -216,10 +235,11 @@ export async function getAvailableMonths(): Promise<SpendingMonth[]> {
 }
 
 export async function getSpendingCategories(
+  userId: string,
   year: number,
   month: number,
 ): Promise<SpendingSummary> {
-  const rows = await getMonthSpendingRows(year, month);
+  const rows = await getMonthSpendingRows(userId, year, month);
 
   const totalsByCategory = new Map<string, number>();
   for (const row of rows) {
@@ -259,11 +279,12 @@ export async function getSpendingCategories(
 }
 
 export async function getCategoryTransactions(
+  userId: string,
   year: number,
   month: number,
   categoryKey: string,
 ): Promise<CategoryTransactionsResult> {
-  const rows = await getMonthSpendingRows(year, month);
+  const rows = await getMonthSpendingRows(userId, year, month);
 
   let matched: SpendingRow[];
   let categoryLabel: string;
@@ -298,10 +319,11 @@ export async function getCategoryTransactions(
 }
 
 export async function getDailyTotals(
+  userId: string,
   year: number,
   month: number,
 ): Promise<DailyTotal[]> {
-  const rows = await getMonthSpendingRows(year, month);
+  const rows = await getMonthSpendingRows(userId, year, month);
 
   const totalsByDay = new Map<number, number>();
   for (const row of rows) {
@@ -315,6 +337,7 @@ export async function getDailyTotals(
 }
 
 export async function getDayTransactions(
+  userId: string,
   date: string,
 ): Promise<DayTransactionsResult> {
   const rows = await db
@@ -329,7 +352,9 @@ export async function getDayTransactions(
       billKind: transactions.billKind,
     })
     .from(transactions)
-    .where(eq(transactions.date, date));
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id))
+    .where(and(eq(transactions.date, date), eq(plaidItems.userId, userId)));
 
   const spendingRows = rows
     .map((row) => {
@@ -381,6 +406,7 @@ export async function getDayTransactions(
 }
 
 export async function getMonthTransactions(
+  userId: string,
   year: number,
   month: number,
 ): Promise<MonthTransactionsResult> {
@@ -401,7 +427,14 @@ export async function getMonthTransactions(
     })
     .from(transactions)
     .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-    .where(and(gte(transactions.date, start), lt(transactions.date, end)));
+    .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id))
+    .where(
+      and(
+        gte(transactions.date, start),
+        lt(transactions.date, end),
+        eq(plaidItems.userId, userId),
+      ),
+    );
 
   const categoryKeysByCount = new Map<string, number>();
   for (const row of rows) {
