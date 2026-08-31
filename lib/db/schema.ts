@@ -12,6 +12,7 @@ import {
 
 export const plaidItems = pgTable("plaid_items", {
   id: serial("id").primaryKey(),
+  userId: text("user_id"),
   institutionName: text("institution_name").notNull(),
   plaidItemId: text("plaid_item_id").notNull().unique(),
   accessToken: text("access_token").notNull(),
@@ -79,13 +80,15 @@ export const transactions = pgTable("transactions", {
 export const dismissedSubscriptionSuggestions = pgTable(
   "dismissed_subscription_suggestions",
   {
-    name: text("name").primaryKey(),
+    userId: text("user_id"),
+    name: text("name").notNull(),
     dismissedAt: timestamp("dismissed_at").notNull().defaultNow(),
   },
 );
 
 export const chatMessages = pgTable("chat_messages", {
   id: serial("id").primaryKey(),
+  userId: text("user_id"),
   role: text("role").notNull(), // "user" | "model" | "tool"
   content: text("content").notNull(),
   toolName: text("tool_name"),
