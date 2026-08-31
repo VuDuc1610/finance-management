@@ -42,8 +42,8 @@ export default async function SpendingPage(props: PageProps<"/spending">) {
 
   if (availableMonths.length === 0) {
     return (
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
-        <h1 className="mb-6 font-sans text-[1.25rem] font-medium text-ink-900">
+      <main className="w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
+        <h1 className="mb-6 font-display text-[1.4rem] text-ink-900">
           Where it went
         </h1>
         {reconnectBanner}
@@ -83,9 +83,9 @@ export default async function SpendingPage(props: PageProps<"/spending">) {
   ]);
 
   return (
-    <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
+    <main className="w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="font-sans text-[1.25rem] font-medium text-ink-900">
+        <h1 className="font-display text-[1.4rem] text-ink-900">
           Where it went
         </h1>
         <SpendingMonthPicker availableMonths={availableMonths} selected={selected} />
@@ -107,7 +107,7 @@ export default async function SpendingPage(props: PageProps<"/spending">) {
             </Card>
 
             <Card className="p-6 sm:p-8 lg:col-span-2">
-              <h2 className="mb-4 font-sans text-[1.125rem] font-medium text-ink-900">
+              <h2 className="mb-4 font-display text-[1.1875rem] text-ink-900">
                 Spending Categories
               </h2>
               <div className="grid grid-cols-1 gap-4">
@@ -125,9 +125,6 @@ export default async function SpendingPage(props: PageProps<"/spending">) {
 
           <div className="mt-6">
             <Card className="p-6 sm:p-8">
-              <h2 className="mb-4 font-sans text-[1.125rem] font-medium text-ink-900">
-                Daily spending
-              </h2>
               <SpendingCalendar
                 year={selected.year}
                 month={selected.month}
