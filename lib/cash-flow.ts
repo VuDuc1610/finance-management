@@ -1,6 +1,6 @@
-import { and, gte, lt } from "drizzle-orm";
+import { and, eq, gte, lt } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { transactions } from "@/lib/db/schema";
+import { accounts, plaidItems, transactions } from "@/lib/db/schema";
 import { dyeHueForIndex, isSpendingCategory, labelForCategory } from "@/lib/plaid/categories";
 
 export interface CashFlowMonth {
@@ -59,8 +59,13 @@ function monthRange(year: number, month: number): { start: string; end: string }
   return { start, end };
 }
 
-export async function getAvailableCashFlowMonths(): Promise<CashFlowMonth[]> {
-  const rows = await db.select({ date: transactions.date }).from(transactions);
+export async function getAvailableCashFlowMonths(userId: string): Promise<CashFlowMonth[]> {
+  const rows = await db
+    .select({ date: transactions.date })
+    .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id))
+    .where(eq(plaidItems.userId, userId));
 
   const seen = new Set<string>();
   for (const row of rows) {
@@ -95,6 +100,7 @@ function detailLabel(primary: string, detailed: string | null): string {
 }
 
 export async function getCashFlowSankey(
+  userId: string,
   year: number,
   month: number,
 ): Promise<CashFlowSankeyResult> {
@@ -109,7 +115,15 @@ export async function getCashFlowSankey(
       detailed: transactions.personalFinanceCategoryDetailed,
     })
     .from(transactions)
-    .where(and(gte(transactions.date, start), lt(transactions.date, end)));
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id))
+    .where(
+      and(
+        gte(transactions.date, start),
+        lt(transactions.date, end),
+        eq(plaidItems.userId, userId),
+      ),
+    );
 
   const parsed = rows.map((row) => ({
     amount:
@@ -258,6 +272,7 @@ export interface IncomeSourceTransactionsResult {
 }
 
 export async function getIncomeSourceTransactions(
+  userId: string,
   year: number,
   month: number,
   sourceLabel: string,
@@ -277,7 +292,15 @@ export async function getIncomeSourceTransactions(
       detailed: transactions.personalFinanceCategoryDetailed,
     })
     .from(transactions)
-    .where(and(gte(transactions.date, start), lt(transactions.date, end)));
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id))
+    .where(
+      and(
+        gte(transactions.date, start),
+        lt(transactions.date, end),
+        eq(plaidItems.userId, userId),
+      ),
+    );
 
   const matched = rows.filter(
     (row) => incomeSourceLabel(row.primary, row.detailed) === sourceLabel,
@@ -325,6 +348,7 @@ function shiftMonth(year: number, month: number, delta: number): { year: number;
 }
 
 export async function getCashFlowTrend(
+  userId: string,
   year: number,
   month: number,
   count = 6,
@@ -342,7 +366,15 @@ export async function getCashFlowTrend(
       detailed: transactions.personalFinanceCategoryDetailed,
     })
     .from(transactions)
-    .where(and(gte(transactions.date, start), lt(transactions.date, end)));
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id))
+    .where(
+      and(
+        gte(transactions.date, start),
+        lt(transactions.date, end),
+        eq(plaidItems.userId, userId),
+      ),
+    );
 
   const byMonth = new Map<string, { income: number; spending: number }>();
   for (const row of rows) {
