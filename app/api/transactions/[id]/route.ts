@@ -34,6 +34,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Transaction not found" }, { status: 404 });
   }
 
+  const ownedAccountIds = await db
+    .select({ id: accounts.id })
+    .from(accounts)
+    .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id))
+    .where(eq(plaidItems.userId, user.id));
+  const ownedAccountIdList = ownedAccountIds.map((row) => row.id);
+
   const body = await request.json();
   const { personalAmount, billKind, dueDate } = body as {
     personalAmount?: number | null;
@@ -57,13 +64,6 @@ export async function PATCH(
     update.billKind = billKind;
 
     if (billKind !== null) {
-      const ownedAccountIds = await db
-        .select({ id: accounts.id })
-        .from(accounts)
-        .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id))
-        .where(eq(plaidItems.userId, user.id));
-      const ownedAccountIdList = ownedAccountIds.map((row) => row.id);
-
       await db
         .update(transactions)
         .set({ billKind: null, updatedAt: new Date() })
@@ -84,7 +84,15 @@ export async function PATCH(
     update.dueDate = dueDate;
   }
 
-  await db.update(transactions).set(update).where(eq(transactions.id, transactionId));
+  await db
+    .update(transactions)
+    .set(update)
+    .where(
+      and(
+        eq(transactions.id, transactionId),
+        inArray(transactions.accountId, ownedAccountIdList),
+      ),
+    );
 
   return NextResponse.json({ success: true });
 }
