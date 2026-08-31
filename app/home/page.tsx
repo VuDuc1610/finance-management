@@ -17,19 +17,20 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
   const displayName = user?.user_metadata?.full_name || user?.email || "there";
+  const userId = user!.id;
 
   const [netWorthSeries, availableMonths, subscriptions] = await Promise.all([
-    getNetWorthBreakdownSeries(),
-    getAvailableMonths(),
-    getSubscriptionsAndBills(),
+    getNetWorthBreakdownSeries(userId),
+    getAvailableMonths(userId),
+    getSubscriptionsAndBills(userId),
   ]);
 
   const latestMonth = availableMonths[0] ?? null;
   const [spendingSummary, dailyTotals, monthTransactions] = latestMonth
     ? await Promise.all([
-        getSpendingCategories(latestMonth.year, latestMonth.month),
-        getDailyTotals(latestMonth.year, latestMonth.month),
-        getMonthTransactions(latestMonth.year, latestMonth.month),
+        getSpendingCategories(userId, latestMonth.year, latestMonth.month),
+        getDailyTotals(userId, latestMonth.year, latestMonth.month),
+        getMonthTransactions(userId, latestMonth.year, latestMonth.month),
       ])
     : [null, [], null];
 

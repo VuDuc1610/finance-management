@@ -12,6 +12,7 @@ import {
   groupTransactionsByDate,
   type MonthTransaction,
 } from "@/lib/spending";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +54,14 @@ export default async function TransactionsPage(
   props: PageProps<"/transactions">,
 ) {
   const searchParams = await props.searchParams;
-  const availableMonths = await getAvailableMonths();
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const userId = user!.id;
+
+  const availableMonths = await getAvailableMonths(userId);
 
   if (availableMonths.length === 0) {
     return (
@@ -105,6 +113,7 @@ export default async function TransactionsPage(
       : availableMonths[0];
 
   const { all: allTransactions } = await getMonthTransactions(
+    userId,
     selected.year,
     selected.month,
   );

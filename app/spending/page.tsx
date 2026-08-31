@@ -10,14 +10,22 @@ import {
   getItemsNeedingReconnect,
   getSpendingCategories,
 } from "@/lib/spending";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function SpendingPage(props: PageProps<"/spending">) {
   const searchParams = await props.searchParams;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const userId = user!.id;
+
   const [availableMonths, itemsNeedingReconnect] = await Promise.all([
-    getAvailableMonths(),
-    getItemsNeedingReconnect(),
+    getAvailableMonths(userId),
+    getItemsNeedingReconnect(userId),
   ]);
 
   const reconnectBanner =
@@ -78,8 +86,8 @@ export default async function SpendingPage(props: PageProps<"/spending">) {
       : availableMonths[0];
 
   const [summary, dailyTotals] = await Promise.all([
-    getSpendingCategories(selected.year, selected.month),
-    getDailyTotals(selected.year, selected.month),
+    getSpendingCategories(userId, selected.year, selected.month),
+    getDailyTotals(userId, selected.year, selected.month),
   ]);
 
   return (

@@ -2,11 +2,17 @@ import { Card } from "@/components/ui/Card";
 import { AddAccountButton } from "@/components/net-worth/AddAccountButton";
 import { ReconnectAccountButton } from "@/components/spending/ReconnectAccountButton";
 import { getLinkedInstitutions } from "@/lib/net-worth";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function ManageAccountsPage() {
-  const linkedInstitutions = await getLinkedInstitutions();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const linkedInstitutions = await getLinkedInstitutions(user!.id);
 
   return (
     <main className="w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
