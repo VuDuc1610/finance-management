@@ -11,12 +11,17 @@ export default function AuthPage() {
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [loginPasswordVisible, setLoginPasswordVisible] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
 
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
+  const [signupPasswordVisible, setSignupPasswordVisible] = useState(false);
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
+  const [signupConfirmPasswordVisible, setSignupConfirmPasswordVisible] =
+    useState(false);
   const [signupError, setSignupError] = useState<string | null>(null);
   const [signupLoading, setSignupLoading] = useState(false);
   const [signupConfirmationSent, setSignupConfirmationSent] = useState(false);
@@ -45,6 +50,12 @@ export default function AuthPage() {
   async function handleSignup(event: React.FormEvent) {
     event.preventDefault();
     setSignupError(null);
+
+    if (signupPassword !== signupConfirmPassword) {
+      setSignupError("Passwords do not match.");
+      return;
+    }
+
     setSignupLoading(true);
 
     const { data, error } = await supabase.auth.signUp({
@@ -92,7 +103,7 @@ export default function AuthPage() {
                   type="email"
                   value={loginEmail}
                   onChange={(event) => setLoginEmail(event.target.value)}
-                  placeholder="you@example.com"
+                  placeholder="chloe@example.com"
                   className="rounded-card border border-linen-300 bg-linen-100 px-3.5 py-2.5 font-sans text-[0.9375rem] text-ink-900 placeholder:text-linen-700 focus-visible:outline-2 focus-visible:outline-dye-indigo"
                 />
               </label>
@@ -101,13 +112,24 @@ export default function AuthPage() {
                 <span className="font-sans text-[0.8125rem] text-linen-700">
                   Password
                 </span>
-                <input
-                  type="password"
-                  value={loginPassword}
-                  onChange={(event) => setLoginPassword(event.target.value)}
-                  placeholder="••••••••"
-                  className="rounded-card border border-linen-300 bg-linen-100 px-3.5 py-2.5 font-sans text-[0.9375rem] text-ink-900 placeholder:text-linen-700 focus-visible:outline-2 focus-visible:outline-dye-indigo"
-                />
+                <div className="relative">
+                  <input
+                    type={loginPasswordVisible ? "text" : "password"}
+                    value={loginPassword}
+                    onChange={(event) => setLoginPassword(event.target.value)}
+                    className="w-full rounded-card border border-linen-300 bg-linen-100 px-3.5 py-2.5 pr-11 font-sans text-[0.9375rem] text-ink-900 focus-visible:outline-2 focus-visible:outline-dye-indigo"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setLoginPasswordVisible((visible) => !visible)}
+                    aria-label={
+                      loginPasswordVisible ? "Hide password" : "Show password"
+                    }
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-linen-700 hover:text-ink-900"
+                  >
+                    <EyeIcon open={loginPasswordVisible} />
+                  </button>
+                </div>
               </label>
 
               {loginError && (
@@ -166,7 +188,7 @@ export default function AuthPage() {
                     type="text"
                     value={signupName}
                     onChange={(event) => setSignupName(event.target.value)}
-                    placeholder="Jane Doe"
+                    placeholder="Chloe P"
                     className="rounded-card border border-linen-300 bg-linen-100 px-3.5 py-2.5 font-sans text-[0.9375rem] text-ink-900 placeholder:text-linen-700 focus-visible:outline-2 focus-visible:outline-dye-indigo"
                   />
                 </label>
@@ -179,7 +201,7 @@ export default function AuthPage() {
                     type="email"
                     value={signupEmail}
                     onChange={(event) => setSignupEmail(event.target.value)}
-                    placeholder="you@example.com"
+                    placeholder="chloe@example.com"
                     className="rounded-card border border-linen-300 bg-linen-100 px-3.5 py-2.5 font-sans text-[0.9375rem] text-ink-900 placeholder:text-linen-700 focus-visible:outline-2 focus-visible:outline-dye-indigo"
                   />
                 </label>
@@ -188,13 +210,60 @@ export default function AuthPage() {
                   <span className="font-sans text-[0.8125rem] text-linen-700">
                     Password
                   </span>
-                  <input
-                    type="password"
-                    value={signupPassword}
-                    onChange={(event) => setSignupPassword(event.target.value)}
-                    placeholder="••••••••"
-                    className="rounded-card border border-linen-300 bg-linen-100 px-3.5 py-2.5 font-sans text-[0.9375rem] text-ink-900 placeholder:text-linen-700 focus-visible:outline-2 focus-visible:outline-dye-indigo"
-                  />
+                  <div className="relative">
+                    <input
+                      type={signupPasswordVisible ? "text" : "password"}
+                      value={signupPassword}
+                      onChange={(event) =>
+                        setSignupPassword(event.target.value)
+                      }
+                      className="w-full rounded-card border border-linen-300 bg-linen-100 px-3.5 py-2.5 pr-11 font-sans text-[0.9375rem] text-ink-900 focus-visible:outline-2 focus-visible:outline-dye-indigo"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSignupPasswordVisible((visible) => !visible)
+                      }
+                      aria-label={
+                        signupPasswordVisible
+                          ? "Hide password"
+                          : "Show password"
+                      }
+                      className="absolute inset-y-0 right-0 flex items-center px-3 text-linen-700 hover:text-ink-900"
+                    >
+                      <EyeIcon open={signupPasswordVisible} />
+                    </button>
+                  </div>
+                </label>
+
+                <label className="flex flex-col gap-1.5">
+                  <span className="font-sans text-[0.8125rem] text-linen-700">
+                    Confirm password
+                  </span>
+                  <div className="relative">
+                    <input
+                      type={signupConfirmPasswordVisible ? "text" : "password"}
+                      value={signupConfirmPassword}
+                      onChange={(event) =>
+                        setSignupConfirmPassword(event.target.value)
+                      }
+                      className="w-full rounded-card border border-linen-300 bg-linen-100 px-3.5 py-2.5 pr-11 font-sans text-[0.9375rem] text-ink-900 focus-visible:outline-2 focus-visible:outline-dye-indigo"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSignupConfirmPasswordVisible((visible) => !visible)
+                      }
+                      aria-label={
+                        signupConfirmPasswordVisible
+                          ? "Hide password"
+                          : "Show password"
+                      }
+                      className="absolute inset-y-0 right-0 flex items-center px-3 text-linen-700 hover:text-ink-900"
+                    >
+                      <EyeIcon open={signupConfirmPasswordVisible} />
+                    </button>
+                  </div>
                 </label>
 
                 {signupError && (
@@ -216,5 +285,41 @@ export default function AuthPage() {
         </div>
       </Card>
     </main>
+  );
+}
+
+function EyeIcon({ open }: { open: boolean }) {
+  if (open) {
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+        <line x1="1" y1="1" x2="23" y2="23" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
   );
 }
