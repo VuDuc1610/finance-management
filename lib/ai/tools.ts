@@ -79,13 +79,17 @@ function asYearMonth(args: ToolArgs): { year: number; month: number } {
   return { year, month };
 }
 
-export async function executeTool(name: string, args: ToolArgs): Promise<unknown> {
+export async function executeTool(
+  name: string,
+  args: ToolArgs,
+  userId: string,
+): Promise<unknown> {
   switch (name) {
     case "getAvailableMonths":
-      return getAvailableMonths();
+      return getAvailableMonths(userId);
     case "getSpendingSummary": {
       const { year, month } = asYearMonth(args);
-      return getSpendingCategories(year, month);
+      return getSpendingCategories(userId, year, month);
     }
     case "getRecentTransactions": {
       const { year, month } = asYearMonth(args);
@@ -93,18 +97,18 @@ export async function executeTool(name: string, args: ToolArgs): Promise<unknown
       if (!categoryKey) {
         throw new Error(`Invalid categoryKey: must be a non-empty string, got ${JSON.stringify(args.categoryKey)}`);
       }
-      return getCategoryTransactions(year, month, categoryKey);
+      return getCategoryTransactions(userId, year, month, categoryKey);
     }
     case "getSubscriptions":
-      return getSubscriptionsAndBills();
+      return getSubscriptionsAndBills(userId);
     case "getCashFlow": {
       const { year, month } = asYearMonth(args);
-      return getCashFlowSankey(year, month);
+      return getCashFlowSankey(userId, year, month);
     }
     case "getNetWorth":
-      return getNetWorthBreakdownSeries();
+      return getNetWorthBreakdownSeries(userId);
     case "getAccounts":
-      return getAccountsBreakdown();
+      return getAccountsBreakdown(userId);
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

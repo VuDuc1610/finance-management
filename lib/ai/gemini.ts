@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { chatMessages } from "@/lib/db/schema";
 import { toolDeclarations, executeTool } from "@/lib/ai/tools";
@@ -26,13 +26,15 @@ interface DbChatRow {
   createdAt: Date;
 }
 
-export async function loadVisibleHistory(): Promise<
+export async function loadVisibleHistory(
+  userId: string,
+): Promise<
   { id: number; role: "user" | "model"; content: string; createdAt: Date }[]
 > {
   const rows: DbChatRow[] = await db
     .select()
     .from(chatMessages)
-    .where(inArray(chatMessages.role, ["user", "model"]))
+    .where(and(inArray(chatMessages.role, ["user", "model"]), eq(chatMessages.userId, userId)))
     .orderBy(desc(chatMessages.createdAt), desc(chatMessages.id))
     .limit(40);
 
@@ -46,20 +48,20 @@ export async function loadVisibleHistory(): Promise<
     .reverse();
 }
 
-async function loadGeminiHistory() {
-  const visible = await loadVisibleHistory();
+async function loadGeminiHistory(userId: string) {
+  const visible = await loadVisibleHistory(userId);
   return visible.map((row) => ({
     role: row.role,
     parts: [{ text: row.content }],
   }));
 }
 
-export async function runChat(userMessage: string): Promise<string> {
+export async function runChat(userMessage: string, userId: string): Promise<string> {
   const callId = Math.random().toString(36).slice(2, 8);
   const t0 = Date.now();
   console.log(`[chat ${callId}] start, message="${userMessage.slice(0, 80)}"`);
 
-  const history = await loadGeminiHistory();
+  const history = await loadGeminiHistory(userId);
   console.log(`[chat ${callId}] loaded history: ${history.length} turns`);
 
   const chat = ai.chats.create({
@@ -73,7 +75,7 @@ export async function runChat(userMessage: string): Promise<string> {
 
   const [insertedUserRow] = await db
     .insert(chatMessages)
-    .values({ role: "user", content: userMessage })
+    .values({ userId, role: "user", content: userMessage })
     .returning({ id: chatMessages.id });
 
   try {
@@ -100,7 +102,7 @@ export async function runChat(userMessage: string): Promise<string> {
         const toolT0 = Date.now();
         let result: unknown;
         try {
-          result = await executeTool(name, args);
+          result = await executeTool(name, args, userId);
           console.log(`[chat ${callId}] iter ${iterations}: tool "${name}" succeeded in ${Date.now() - toolT0}ms`);
         } catch (error) {
           result = {
@@ -112,6 +114,7 @@ export async function runChat(userMessage: string): Promise<string> {
         }
 
         await db.insert(chatMessages).values({
+          userId,
           role: "tool",
           content: JSON.stringify(result),
           toolName: name,
@@ -137,7 +140,7 @@ export async function runChat(userMessage: string): Promise<string> {
     }
 
     const replyText = response.text ?? "I couldn't come up with an answer for that.";
-    await db.insert(chatMessages).values({ role: "model", content: replyText });
+    await db.insert(chatMessages).values({ userId, role: "model", content: replyText });
 
     console.log(`[chat ${callId}] done in ${Date.now() - t0}ms total, ${iterations} tool iteration(s)`);
 
