@@ -1,6 +1,6 @@
-import { isNotNull } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { transactions } from "@/lib/db/schema";
+import { accounts, plaidItems, transactions } from "@/lib/db/schema";
 import { dyeHueForIndex, labelForCategory } from "@/lib/plaid/categories";
 import { nextOccurrenceDate, daysUntil } from "@/lib/recurring-date";
 
@@ -30,7 +30,7 @@ export interface BillsResult {
   summary: BillsSummary;
 }
 
-export async function getSubscriptionsAndBills(): Promise<BillsResult> {
+export async function getSubscriptionsAndBills(userId: string): Promise<BillsResult> {
   const rows = await db
     .select({
       id: transactions.id,
@@ -42,7 +42,9 @@ export async function getSubscriptionsAndBills(): Promise<BillsResult> {
       dueDate: transactions.dueDate,
     })
     .from(transactions)
-    .where(isNotNull(transactions.billKind));
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id))
+    .where(and(isNotNull(transactions.billKind), eq(plaidItems.userId, userId)));
 
   const sorted = rows
     .map((row) => ({

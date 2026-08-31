@@ -1,7 +1,9 @@
-import { gt, isNotNull } from "drizzle-orm";
+import { and, eq, gt, isNotNull } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
+  accounts,
   dismissedSubscriptionSuggestions,
+  plaidItems,
   transactions,
 } from "@/lib/db/schema";
 import { isSpendingCategory, labelForCategory } from "@/lib/plaid/categories";
@@ -133,18 +135,21 @@ function clusterByNormalizedName(
   return clusters;
 }
 
-export async function getSubscriptionSuggestions(): Promise<
-  SubscriptionSuggestion[]
-> {
+export async function getSubscriptionSuggestions(
+  userId: string,
+): Promise<SubscriptionSuggestion[]> {
   const dismissed = await db
     .select({ name: dismissedSubscriptionSuggestions.name })
-    .from(dismissedSubscriptionSuggestions);
+    .from(dismissedSubscriptionSuggestions)
+    .where(eq(dismissedSubscriptionSuggestions.userId, userId));
   const dismissedKeys = new Set(dismissed.map((row) => row.name));
 
   const alreadyTagged = await db
     .select({ name: transactions.name })
     .from(transactions)
-    .where(isNotNull(transactions.billKind));
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id))
+    .where(and(isNotNull(transactions.billKind), eq(plaidItems.userId, userId)));
   const taggedKeys = new Set(
     alreadyTagged.map((row) => normalizeName(row.name)),
   );
@@ -158,7 +163,9 @@ export async function getSubscriptionSuggestions(): Promise<
       category: transactions.personalFinanceCategoryPrimary,
     })
     .from(transactions)
-    .where(gt(transactions.amount, "0"));
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id))
+    .where(and(gt(transactions.amount, "0"), eq(plaidItems.userId, userId)));
 
   const spendingRows = rows.filter((row) => isSpendingCategory(row.category));
   const clusters = clusterByNormalizedName(spendingRows);
@@ -197,10 +204,13 @@ export async function getSubscriptionSuggestions(): Promise<
 }
 
 export async function dismissSubscriptionSuggestion(
+  userId: string,
   groupKey: string,
 ): Promise<void> {
   await db
     .insert(dismissedSubscriptionSuggestions)
-    .values({ name: groupKey })
-    .onConflictDoNothing();
+    .values({ userId, name: groupKey })
+    .onConflictDoNothing({
+      target: [dismissedSubscriptionSuggestions.userId, dismissedSubscriptionSuggestions.name],
+    });
 }
