@@ -88,7 +88,7 @@ export function AdvisorChat() {
 
       {isOpen && (
         <div className="fixed bottom-24 right-6 z-50 flex h-[32rem] w-96 flex-col rounded-card border border-linen-300 bg-linen-100 shadow-xl">
-          <div className="border-b border-linen-300 px-4 py-3 font-sans text-[0.9375rem] font-medium text-ink-900">
+          <div className="border-b border-linen-300 px-4 py-3 font-display text-[1.0625rem] text-ink-900">
             Finance Advisor
           </div>
 

@@ -28,7 +28,7 @@ export default async function IncomeSourceTransactionsPage(
 
   if (!year || !month) {
     return (
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
+      <main className="w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
         <Link
           href={backHref}
           className="font-sans text-[0.8125rem] text-linen-700 hover:text-ink-900"
@@ -47,7 +47,7 @@ export default async function IncomeSourceTransactionsPage(
   const result = await getIncomeSourceTransactions(year, month, sourceLabel);
 
   return (
-    <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
+    <main className="w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
       <Link
         href={backHref}
         className="font-sans text-[0.8125rem] text-linen-700 hover:text-ink-900"
@@ -55,7 +55,7 @@ export default async function IncomeSourceTransactionsPage(
         ← Back to Cash flow
       </Link>
 
-      <h1 className="mt-2 mb-2 font-sans text-[1.25rem] font-medium text-ink-900">
+      <h1 className="mt-2 mb-2 font-display text-[1.4rem] text-ink-900">
         {result.sourceLabel} — {result.monthLabel}
       </h1>
       <p className="mb-6 font-sans text-[0.8125rem] text-linen-700">

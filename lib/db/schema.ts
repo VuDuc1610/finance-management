@@ -76,6 +76,14 @@ export const transactions = pgTable("transactions", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const dismissedSubscriptionSuggestions = pgTable(
+  "dismissed_subscription_suggestions",
+  {
+    name: text("name").primaryKey(),
+    dismissedAt: timestamp("dismissed_at").notNull().defaultNow(),
+  },
+);
+
 export const chatMessages = pgTable("chat_messages", {
   id: serial("id").primaryKey(),
   role: text("role").notNull(), // "user" | "model" | "tool"

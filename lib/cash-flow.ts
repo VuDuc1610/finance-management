@@ -302,3 +302,86 @@ export async function getIncomeSourceTransactions(
 
   return { transactions: list, sourceLabel, monthLabel };
 }
+
+export interface CashFlowTrendMonth {
+  year: number;
+  month: number;
+  monthLabel: string;
+  income: number;
+  spending: number;
+  net: number;
+  isSelected: boolean;
+}
+
+export interface CashFlowTrendResult {
+  months: CashFlowTrendMonth[];
+  latestNet: number;
+  latestMonthLabel: string;
+}
+
+function shiftMonth(year: number, month: number, delta: number): { year: number; month: number } {
+  const zeroBased = (year * 12 + (month - 1)) + delta;
+  return { year: Math.floor(zeroBased / 12), month: (((zeroBased % 12) + 12) % 12) + 1 };
+}
+
+export async function getCashFlowTrend(
+  year: number,
+  month: number,
+  count = 6,
+): Promise<CashFlowTrendResult> {
+  const first = shiftMonth(year, month, -(count - 1));
+  const { start } = monthRange(first.year, first.month);
+  const { end } = monthRange(year, month);
+
+  const rows = await db
+    .select({
+      date: transactions.date,
+      amount: transactions.amount,
+      personalAmount: transactions.personalAmount,
+      primary: transactions.personalFinanceCategoryPrimary,
+      detailed: transactions.personalFinanceCategoryDetailed,
+    })
+    .from(transactions)
+    .where(and(gte(transactions.date, start), lt(transactions.date, end)));
+
+  const byMonth = new Map<string, { income: number; spending: number }>();
+  for (const row of rows) {
+    const key = row.date.slice(0, 7);
+    const amount = row.personalAmount === null ? Number(row.amount) : Number(row.personalAmount);
+    const isIncome =
+      amount < 0 &&
+      (row.primary === "INCOME" ||
+        (row.primary === "TRANSFER_IN" &&
+          row.detailed === "TRANSFER_IN_TRANSFER_IN_FROM_APPS"));
+    const isSpending = amount > 0 && isSpendingCategory(row.primary);
+
+    const bucket = byMonth.get(key) ?? { income: 0, spending: 0 };
+    if (isIncome) bucket.income += Math.abs(amount);
+    if (isSpending) bucket.spending += amount;
+    byMonth.set(key, bucket);
+  }
+
+  const months: CashFlowTrendMonth[] = [];
+  for (let i = 0; i < count; i++) {
+    const { year: y, month: m } = shiftMonth(first.year, first.month, i);
+    const key = `${y}-${pad2(m)}`;
+    const bucket = byMonth.get(key) ?? { income: 0, spending: 0 };
+    months.push({
+      year: y,
+      month: m,
+      monthLabel: MONTH_NAMES[m - 1],
+      income: bucket.income,
+      spending: bucket.spending,
+      net: bucket.income - bucket.spending,
+      isSelected: y === year && m === month,
+    });
+  }
+
+  const latest = months[months.length - 1];
+
+  return {
+    months,
+    latestNet: latest.net,
+    latestMonthLabel: latest.monthLabel,
+  };
+}

@@ -54,7 +54,7 @@ export function AccountsBreakdown({ groups }: AccountsBreakdownProps) {
           <div key={group.type}>
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-baseline gap-2">
-                <h3 className="font-sans text-[1.0625rem] font-medium text-ink-900">
+                <h3 className="font-display text-[1.125rem] text-ink-900">
                   {group.label}
                 </h3>
                 <span

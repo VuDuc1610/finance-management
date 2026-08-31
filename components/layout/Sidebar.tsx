@@ -72,7 +72,7 @@ function ManageAccountsIcon(props: SVGProps<SVGSVGElement>) {
 
 const links = [
   { href: "/home", label: "Home", Icon: HomeIcon },
-  { href: "/dashboard", label: "Net worth", Icon: NetWorthIcon },
+  { href: "/networth", label: "Net worth", Icon: NetWorthIcon },
   { href: "/spending", label: "Spending", Icon: SpendingIcon },
   { href: "/transactions", label: "Transactions", Icon: TransactionsIcon },
   { href: "/cash-flow", label: "Cash flow", Icon: CashFlowIcon },
@@ -115,7 +115,7 @@ export function Sidebar() {
                 collapsed ? "mx-auto h-9 w-9 justify-center" : "gap-3 px-3 py-2"
               } ${
                 isActive
-                  ? "bg-linen-300/40 text-ink-900"
+                  ? "bg-dye-indigo/10 text-dye-indigo"
                   : "text-linen-700 hover:bg-linen-300/20 hover:text-ink-900"
               }`}
             >
@@ -133,7 +133,7 @@ export function Sidebar() {
           collapsed ? "mx-auto h-9 w-9 justify-center" : "gap-3 px-3 py-2"
         } ${
           pathname === "/manage-accounts"
-            ? "bg-linen-300/40 text-ink-900"
+            ? "bg-dye-indigo/10 text-dye-indigo"
             : "text-linen-700 hover:bg-linen-300/20 hover:text-ink-900"
         }`}
       >

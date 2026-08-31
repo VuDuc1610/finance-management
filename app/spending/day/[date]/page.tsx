@@ -34,7 +34,7 @@ export default async function DayTransactionsPage(
   const result = await getDayTransactions(date);
 
   return (
-    <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
+    <main className="w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
       <Link
         href={backHref}
         className="font-sans text-[0.8125rem] text-linen-700 hover:text-ink-900"
@@ -43,7 +43,7 @@ export default async function DayTransactionsPage(
       </Link>
 
       <div className="mt-2 mb-6 flex items-baseline gap-3">
-        <h1 className="font-sans text-[1.25rem] font-medium text-ink-900">
+        <h1 className="font-display text-[1.4rem] text-ink-900">
           {result.dateLabel}
         </h1>
         {result.total > 0 && (

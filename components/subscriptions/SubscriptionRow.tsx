@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { BillItem } from "@/lib/subscriptions";
 import { getDueBadge } from "@/components/subscriptions/dueStatus";
@@ -21,7 +21,19 @@ export function SubscriptionRow({ item }: SubscriptionRowProps) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(item.dueDate ?? "");
   const [saving, setSaving] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const badge = getDueBadge(item.dueDate);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   async function save() {
     setSaving(true);
@@ -33,6 +45,20 @@ export function SubscriptionRow({ item }: SubscriptionRowProps) {
       });
       router.refresh();
       setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function remove() {
+    setSaving(true);
+    try {
+      await fetch(`/api/transactions/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ billKind: null, dueDate: null }),
+      });
+      router.refresh();
     } finally {
       setSaving(false);
     }
@@ -91,13 +117,45 @@ export function SubscriptionRow({ item }: SubscriptionRowProps) {
             >
               {badge.label}
             </span>
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              className="font-sans text-[0.75rem] text-linen-700 underline hover:text-ink-900"
-            >
-              Edit
-            </button>
+            <div ref={menuRef} className="relative">
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => setMenuOpen((prev) => !prev)}
+                aria-label="Subscription actions"
+                className="flex h-6 w-6 items-center justify-center rounded-full text-linen-700 hover:bg-linen-300/30 hover:text-ink-900 disabled:opacity-50"
+              >
+                ⋮
+              </button>
+              {menuOpen && (
+                <ul className="absolute right-0 z-10 mt-1 w-40 overflow-hidden rounded-card border border-linen-300 bg-linen-100 py-1">
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setEditing(true);
+                      }}
+                      className="block w-full px-3 py-1.5 text-left font-sans text-[0.75rem] text-linen-700 hover:bg-linen-300/30 hover:text-ink-900"
+                    >
+                      Edit due date
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        remove();
+                      }}
+                      className="block w-full px-3 py-1.5 text-left font-sans text-[0.75rem] text-dye-madder hover:bg-linen-300/30"
+                    >
+                      Remove
+                    </button>
+                  </li>
+                </ul>
+              )}
+            </div>
           </>
         )}
         <span className="font-mono text-[0.9375rem] font-medium text-ink-900">

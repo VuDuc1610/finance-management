@@ -104,7 +104,7 @@ export function HomeBoard({
   const cards: Record<CardId, ReactNode> = {
     "net-worth": (
       <LinkCard
-        href="/"
+        href="/networth"
         title="Net worth"
         subtitle={netWorthPoints.length > 0 ? currency.format(currentNetWorth) : undefined}
         {...dragProps("net-worth")}

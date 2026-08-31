@@ -15,6 +15,9 @@
   --font-sans: var(--font-karla);
   --font-mono: var(--font-plex-mono);
 
+  --color-accent: var(--color-dye-indigo);
+  --color-highlight: var(--color-dye-saffron);
+
   --radius-card: 12px;
   --radius-pill: 999px;
 }

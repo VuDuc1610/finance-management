@@ -1,8 +1,8 @@
 import { Card } from "@/components/ui/Card";
-import { CashFlowSankey } from "@/components/cash-flow/CashFlowSankey";
+import { CashFlowView } from "@/components/cash-flow/CashFlowView";
 import { CashFlowMonthPicker } from "@/components/cash-flow/CashFlowMonthPicker";
 import { CashFlowSummaryStats } from "@/components/cash-flow/CashFlowSummaryStats";
-import { getAvailableCashFlowMonths, getCashFlowSankey } from "@/lib/cash-flow";
+import { getAvailableCashFlowMonths, getCashFlowSankey, getCashFlowTrend } from "@/lib/cash-flow";
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +12,8 @@ export default async function CashFlowPage(props: PageProps<"/cash-flow">) {
 
   if (availableMonths.length === 0) {
     return (
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
-        <h1 className="mb-6 font-sans text-[1.25rem] font-medium text-ink-900">
+      <main className="w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
+        <h1 className="mb-6 font-display text-[1.4rem] text-ink-900">
           Cash flow
         </h1>
         <Card className="p-8 text-center">
@@ -46,12 +46,15 @@ export default async function CashFlowPage(props: PageProps<"/cash-flow">) {
       ? requested
       : availableMonths[0];
 
-  const sankey = await getCashFlowSankey(selected.year, selected.month);
+  const [sankey, trend] = await Promise.all([
+    getCashFlowSankey(selected.year, selected.month),
+    getCashFlowTrend(selected.year, selected.month),
+  ]);
 
   return (
-    <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
+    <main className="w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="font-sans text-[1.25rem] font-medium text-ink-900">
+        <h1 className="font-display text-[1.4rem] text-ink-900">
           Cash flow
         </h1>
         <CashFlowMonthPicker availableMonths={availableMonths} selected={selected} />
@@ -67,13 +70,14 @@ export default async function CashFlowPage(props: PageProps<"/cash-flow">) {
           />
 
           <Card className="p-6 sm:p-8">
-            <p className="mb-4 font-mono text-[0.8125rem] text-linen-700">
-              {sankey.monthLabel}
-            </p>
-            <CashFlowSankey
+            <CashFlowView
+              monthLabel={sankey.monthLabel}
               nodes={sankey.nodes}
               links={sankey.links}
               totalIncome={sankey.totalIncome}
+              trendMonths={trend.months}
+              trendLatestNet={trend.latestNet}
+              trendLatestMonthLabel={trend.latestMonthLabel}
             />
           </Card>
         </>
