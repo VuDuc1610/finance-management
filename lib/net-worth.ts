@@ -11,9 +11,9 @@ export interface NetWorthBreakdownPoint {
 
 const LIABILITY_TYPES = new Set(["credit", "loan"]);
 
-export async function getNetWorthBreakdownSeries(): Promise<
-  NetWorthBreakdownPoint[]
-> {
+export async function getNetWorthBreakdownSeries(
+  userId: string,
+): Promise<NetWorthBreakdownPoint[]> {
   const rows = await db
     .select({
       date: balanceSnapshots.date,
@@ -21,7 +21,9 @@ export async function getNetWorthBreakdownSeries(): Promise<
       balance: balanceSnapshots.currentBalance,
     })
     .from(balanceSnapshots)
-    .innerJoin(accounts, eq(balanceSnapshots.accountId, accounts.id));
+    .innerJoin(accounts, eq(balanceSnapshots.accountId, accounts.id))
+    .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id))
+    .where(eq(plaidItems.userId, userId));
 
   const byDate = new Map<string, { assets: number; liabilities: number }>();
 
@@ -51,7 +53,9 @@ export interface AssetDistributionEntry {
   percent: number;
 }
 
-export async function getAssetDistribution(): Promise<AssetDistributionEntry[]> {
+export async function getAssetDistribution(
+  userId: string,
+): Promise<AssetDistributionEntry[]> {
   const rows = await db
     .select({
       accountId: accounts.id,
@@ -62,7 +66,8 @@ export async function getAssetDistribution(): Promise<AssetDistributionEntry[]> 
     })
     .from(balanceSnapshots)
     .innerJoin(accounts, eq(balanceSnapshots.accountId, accounts.id))
-    .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id));
+    .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id))
+    .where(eq(plaidItems.userId, userId));
 
   const latestByAccount = new Map<
     number,
@@ -138,7 +143,7 @@ function labelForType(type: string): string {
   return TYPE_LABELS[type] ?? type.charAt(0).toUpperCase() + type.slice(1);
 }
 
-export async function getAccountsBreakdown(): Promise<AccountGroup[]> {
+export async function getAccountsBreakdown(userId: string): Promise<AccountGroup[]> {
   const rows = await db
     .select({
       accountId: accounts.id,
@@ -150,7 +155,9 @@ export async function getAccountsBreakdown(): Promise<AccountGroup[]> {
       createdAt: balanceSnapshots.createdAt,
     })
     .from(balanceSnapshots)
-    .innerJoin(accounts, eq(balanceSnapshots.accountId, accounts.id));
+    .innerJoin(accounts, eq(balanceSnapshots.accountId, accounts.id))
+    .innerJoin(plaidItems, eq(accounts.itemId, plaidItems.id))
+    .where(eq(plaidItems.userId, userId));
 
   if (rows.length === 0) {
     return [];
@@ -250,13 +257,16 @@ export interface LinkedInstitution {
   institutionName: string;
 }
 
-export async function getLinkedInstitutions(): Promise<LinkedInstitution[]> {
+export async function getLinkedInstitutions(
+  userId: string,
+): Promise<LinkedInstitution[]> {
   const rows = await db
     .select({
       id: plaidItems.id,
       institutionName: plaidItems.institutionName,
     })
-    .from(plaidItems);
+    .from(plaidItems)
+    .where(eq(plaidItems.userId, userId));
 
   return rows.map((row) => ({
     itemId: row.id,
