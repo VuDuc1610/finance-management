@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { CountryCode, Products } from "plaid";
 import { plaidClient } from "@/lib/plaid/client";
 import { plaidItems } from "@/lib/db/schema";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json().catch(() => ({}));
     const itemId = typeof body.itemId === "number" ? body.itemId : undefined;
 
@@ -15,7 +24,7 @@ export async function POST(request: NextRequest) {
       const [item] = await db
         .select()
         .from(plaidItems)
-        .where(eq(plaidItems.id, itemId));
+        .where(and(eq(plaidItems.id, itemId), eq(plaidItems.userId, user.id)));
       if (!item) {
         return NextResponse.json({ error: "Item not found" }, { status: 404 });
       }
@@ -23,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     const response = await plaidClient.linkTokenCreate({
-      user: { client_user_id: "zen-linen-single-user" },
+      user: { client_user_id: user.id },
       client_name: "Zen Linen",
       products: [Products.Transactions],
       optional_products: [Products.Investments, Products.Liabilities, Products.Identity],

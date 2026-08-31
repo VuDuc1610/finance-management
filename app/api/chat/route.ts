@@ -1,15 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { loadVisibleHistory, runChat } from "@/lib/ai/gemini";
+import { createClient } from "@/lib/supabase/server";
 
 export const maxDuration = 60;
 
-// Chat API route handler
 export async function GET() {
-  const messages = await loadVisibleHistory();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const messages = await loadVisibleHistory(user.id);
   return NextResponse.json({ messages });
 }
 
 export async function POST(request: NextRequest) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await request.json();
   const message = body.message;
 
@@ -18,7 +34,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const reply = await runChat(message);
+    const reply = await runChat(message, user.id);
     return NextResponse.json({ reply });
   } catch (error) {
     console.error("Chat error:", error);

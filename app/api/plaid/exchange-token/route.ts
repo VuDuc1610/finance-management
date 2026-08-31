@@ -2,8 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { plaidClient } from "@/lib/plaid/client";
 import { db } from "@/lib/db/client";
 import { accounts, plaidItems } from "@/lib/db/schema";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await request.json();
   const publicToken = body.publicToken;
   const institutionName = body.institutionName;
@@ -35,6 +44,7 @@ export async function POST(request: NextRequest) {
       const [item] = await tx
         .insert(plaidItems)
         .values({
+          userId: user.id,
           institutionName: resolvedInstitutionName,
           plaidItemId: itemId,
           accessToken,
@@ -42,6 +52,7 @@ export async function POST(request: NextRequest) {
         .onConflictDoUpdate({
           target: plaidItems.plaidItemId,
           set: {
+            userId: user.id,
             accessToken,
             institutionName: resolvedInstitutionName,
           },
