@@ -1,9 +1,10 @@
 "use client";
 
-import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import type { SpendingComparison } from "@/lib/analytics-types";
 
-interface SpendingMiniChartProps {
-  data: { day: number; amount: number }[];
+interface AnalyticsMiniChartProps {
+  data: SpendingComparison;
 }
 
 const currency = new Intl.NumberFormat("en-US", {
@@ -23,26 +24,13 @@ const tickStyle = {
   fill: "var(--color-linen-700)",
 };
 
-export function SpendingMiniChart({ data }: SpendingMiniChartProps) {
-  const cumulative = data.reduce<{ day: number; amount: number }[]>((acc, point) => {
-    const previous = acc[acc.length - 1]?.amount ?? 0;
-    acc.push({ day: point.day, amount: previous + point.amount });
-    return acc;
-  }, []);
-
+export function AnalyticsMiniChart({ data }: AnalyticsMiniChartProps) {
   return (
     <div className="h-64 w-full sm:h-80">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={cumulative} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
-          <defs>
-            <linearGradient id="spendingMiniFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--color-dye-saffron)" stopOpacity={0.35} />
-              <stop offset="100%" stopColor="var(--color-dye-saffron)" stopOpacity={0} />
-            </linearGradient>
-          </defs>
+        <AreaChart data={data.points} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
           <XAxis
-            dataKey="day"
-            tickFormatter={(day) => `Day ${day}`}
+            dataKey="label"
             tick={tickStyle}
             axisLine={{ stroke: "var(--color-linen-300)" }}
             tickLine={false}
@@ -50,8 +38,7 @@ export function SpendingMiniChart({ data }: SpendingMiniChartProps) {
             minTickGap={32}
           />
           <YAxis
-            dataKey="amount"
-            domain={["dataMin", "dataMax + 100"]}
+            domain={[0, "dataMax + 100"]}
             tickFormatter={formatCompactDollars}
             tick={tickStyle}
             axisLine={false}
@@ -60,8 +47,10 @@ export function SpendingMiniChart({ data }: SpendingMiniChartProps) {
             width={40}
           />
           <Tooltip
-            formatter={(value) => currency.format(Number(value))}
-            labelFormatter={(label) => `Day ${label}`}
+            formatter={(value, name) => [
+              currency.format(Number(value)),
+              name === "current" ? data.currentLabel : data.previousLabel,
+            ]}
             contentStyle={{
               background: "var(--color-linen-100)",
               border: "1px solid var(--color-linen-300)",
@@ -72,11 +61,19 @@ export function SpendingMiniChart({ data }: SpendingMiniChartProps) {
             }}
           />
           <Area
-            type="monotone"
-            dataKey="amount"
-            stroke="var(--color-dye-saffron)"
+            type="linear"
+            dataKey="previous"
+            stroke="var(--color-linen-700)"
+            fill="transparent"
             strokeWidth={2}
-            fill="url(#spendingMiniFill)"
+          />
+          <Area
+            type="linear"
+            dataKey="current"
+            stroke="var(--color-dye-madder)"
+            fill="var(--color-dye-madder)"
+            fillOpacity={0.2}
+            strokeWidth={2}
           />
         </AreaChart>
       </ResponsiveContainer>

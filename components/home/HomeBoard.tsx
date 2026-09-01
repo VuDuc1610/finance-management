@@ -5,8 +5,12 @@ import type { ReactNode } from "react";
 import { LinkCard } from "@/components/ui/LinkCard";
 import { NetWorthChart } from "@/components/net-worth/NetWorthChart";
 import { SpendingMiniChart } from "@/components/spending/SpendingMiniChart";
+import { AnalyticsMiniChart } from "@/components/analytics/AnalyticsMiniChart";
+import { CashFlowMiniChart } from "@/components/cash-flow/CashFlowMiniChart";
 import { UpcomingPayments } from "@/components/subscriptions/UpcomingPayments";
 import type { BillItem } from "@/lib/subscriptions";
+import type { SpendingComparison } from "@/lib/analytics-types";
+import type { CashFlowTrendMonth } from "@/lib/cash-flow";
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -36,10 +40,21 @@ interface HomeBoardProps {
   transactionsMonthLabel: string | null;
   recentTransactions: HomeTransaction[];
   subscriptionItems: BillItem[];
+  analyticsData: SpendingComparison;
+  cashFlowMonths: CashFlowTrendMonth[];
+  cashFlowLatestNet: number;
+  cashFlowLatestMonthLabel: string | null;
 }
 
 const STORAGE_KEY = "home-board-order-v1";
-const CARD_IDS = ["net-worth", "spending", "transactions", "upcoming-payments"] as const;
+const CARD_IDS = [
+  "net-worth",
+  "spending",
+  "analytics",
+  "cash-flow",
+  "transactions",
+  "upcoming-payments",
+] as const;
 type CardId = (typeof CARD_IDS)[number];
 
 export function HomeBoard({
@@ -50,6 +65,10 @@ export function HomeBoard({
   transactionsMonthLabel,
   recentTransactions,
   subscriptionItems,
+  analyticsData,
+  cashFlowMonths,
+  cashFlowLatestNet,
+  cashFlowLatestMonthLabel,
 }: HomeBoardProps) {
   const [order, setOrder] = useState<CardId[]>([...CARD_IDS]);
   const [dragId, setDragId] = useState<CardId | null>(null);
@@ -127,6 +146,34 @@ export function HomeBoard({
           <SpendingMiniChart data={dailyTotals} />
         ) : (
           <p className="font-sans text-[0.9375rem] text-linen-700">No spending data yet.</p>
+        )}
+      </LinkCard>
+    ),
+    analytics: (
+      <LinkCard
+        href="/analytics"
+        title="Analytics"
+        subtitle={`${currency.format(analyticsData.totalCurrent)} ${analyticsData.currentLabel}`}
+        {...dragProps("analytics")}
+      >
+        <AnalyticsMiniChart data={analyticsData} />
+      </LinkCard>
+    ),
+    "cash-flow": (
+      <LinkCard
+        href="/cash-flow"
+        title="Cash flow"
+        subtitle={
+          cashFlowLatestMonthLabel
+            ? `Kept ${currency.format(cashFlowLatestNet)} in ${cashFlowLatestMonthLabel}`
+            : undefined
+        }
+        {...dragProps("cash-flow")}
+      >
+        {cashFlowMonths.length > 0 ? (
+          <CashFlowMiniChart months={cashFlowMonths} />
+        ) : (
+          <p className="font-sans text-[0.9375rem] text-linen-700">No cash flow data yet.</p>
         )}
       </LinkCard>
     ),
