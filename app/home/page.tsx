@@ -7,6 +7,8 @@ import {
   getSpendingCategories,
 } from "@/lib/spending";
 import { getSubscriptionsAndBills } from "@/lib/subscriptions";
+import { getSpendingComparison } from "@/lib/analytics";
+import { getAvailableCashFlowMonths, getCashFlowTrend } from "@/lib/cash-flow";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -19,20 +21,25 @@ export default async function HomePage() {
   const displayName = user?.user_metadata?.full_name || user?.email || "there";
   const userId = user!.id;
 
-  const [netWorthSeries, availableMonths, subscriptions] = await Promise.all([
-    getNetWorthBreakdownSeries(userId),
-    getAvailableMonths(userId),
-    getSubscriptionsAndBills(userId),
-  ]);
+  const [netWorthSeries, availableMonths, subscriptions, analyticsData, availableCashFlowMonths] =
+    await Promise.all([
+      getNetWorthBreakdownSeries(userId),
+      getAvailableMonths(userId),
+      getSubscriptionsAndBills(userId),
+      getSpendingComparison(userId, "month"),
+      getAvailableCashFlowMonths(userId),
+    ]);
 
   const latestMonth = availableMonths[0] ?? null;
-  const [spendingSummary, dailyTotals, monthTransactions] = latestMonth
-    ? await Promise.all([
-        getSpendingCategories(userId, latestMonth.year, latestMonth.month),
-        getDailyTotals(userId, latestMonth.year, latestMonth.month),
-        getMonthTransactions(userId, latestMonth.year, latestMonth.month),
-      ])
-    : [null, [], null];
+  const latestCashFlowMonth = availableCashFlowMonths[0] ?? null;
+  const [spendingSummary, dailyTotals, monthTransactions, cashFlowTrend] = await Promise.all([
+    latestMonth ? getSpendingCategories(userId, latestMonth.year, latestMonth.month) : null,
+    latestMonth ? getDailyTotals(userId, latestMonth.year, latestMonth.month) : [],
+    latestMonth ? getMonthTransactions(userId, latestMonth.year, latestMonth.month) : null,
+    latestCashFlowMonth
+      ? getCashFlowTrend(userId, latestCashFlowMonth.year, latestCashFlowMonth.month)
+      : null,
+  ]);
 
   const netWorthPoints = netWorthSeries.slice(-30).map((point) => ({
     date: point.date,
@@ -60,6 +67,10 @@ export default async function HomePage() {
         transactionsMonthLabel={latestMonth ? (monthTransactions?.monthLabel ?? null) : null}
         recentTransactions={recentTransactions}
         subscriptionItems={subscriptions.items}
+        analyticsData={analyticsData}
+        cashFlowMonths={cashFlowTrend?.months ?? []}
+        cashFlowLatestNet={cashFlowTrend?.latestNet ?? 0}
+        cashFlowLatestMonthLabel={cashFlowTrend?.latestMonthLabel ?? null}
       />
     </main>
   );

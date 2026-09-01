@@ -51,6 +51,17 @@ function CashFlowIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+function AnalyticsIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <line x1="4" y1="20" x2="20" y2="20" />
+      <rect x="6" y="12" width="3" height="8" />
+      <rect x="11" y="7" width="3" height="13" />
+      <rect x="16" y="3" width="3" height="17" />
+    </svg>
+  );
+}
+
 function SubscriptionsIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -76,6 +87,7 @@ const links = [
   { href: "/spending", label: "Spending", Icon: SpendingIcon },
   { href: "/transactions", label: "Transactions", Icon: TransactionsIcon },
   { href: "/cash-flow", label: "Cash flow", Icon: CashFlowIcon },
+  { href: "/analytics", label: "Analytics", Icon: AnalyticsIcon },
   { href: "/subscriptions", label: "Subscriptions", Icon: SubscriptionsIcon },
 ];
 
