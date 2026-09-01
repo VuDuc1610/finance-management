@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { plaidClient } from "@/lib/plaid/client";
 import { db } from "@/lib/db/client";
 import { accounts, plaidItems } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
+
+class ItemOwnedByAnotherUserError extends Error {
+  constructor() {
+    super("This Plaid item is already linked to another account");
+  }
+}
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -52,12 +59,16 @@ export async function POST(request: NextRequest) {
         .onConflictDoUpdate({
           target: plaidItems.plaidItemId,
           set: {
-            userId: user.id,
             accessToken,
             institutionName: resolvedInstitutionName,
           },
+          where: eq(plaidItems.userId, user.id),
         })
         .returning({ id: plaidItems.id });
+
+      if (!item) {
+        throw new ItemOwnedByAnotherUserError();
+      }
 
       const accountRows = accountsResponse.data.accounts.map((account) => ({
         itemId: item.id,
@@ -81,6 +92,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, accountCount });
   } catch (err) {
+    if (err instanceof ItemOwnedByAnotherUserError) {
+      return NextResponse.json({ error: err.message }, { status: 409 });
+    }
     console.error(
       "plaid/exchange-token failed:",
       err instanceof Error ? err.name : "unknown error",
