@@ -21,7 +21,7 @@ export default async function AnalyticsPage(props: PageProps<"/analytics">) {
 
   return (
     <main className="w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
-      <h1 className="mb-6 font-display text-[1.4rem] text-ink-900">
+      <h1 className="mb-6 font-display text-[2.25rem] text-ink-900">
         Analytics
       </h1>
 

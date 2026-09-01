@@ -20,7 +20,7 @@ export default async function Home() {
   return (
     <main className="w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="font-display text-[1.4rem] text-ink-900">
+        <h1 className="font-display text-[2.25rem] text-ink-900">
           Net worth
         </h1>
       </div>
