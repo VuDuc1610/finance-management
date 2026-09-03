@@ -1,14 +1,20 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { AdvisorChat } from "@/components/chat/AdvisorChat";
+import { isDemoModeClient } from "@/lib/demo/constants";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isChromeless = pathname === "/" || pathname === "/auth";
+  const [isDemo, setIsDemo] = useState(false);
+
+  useEffect(() => {
+    setIsDemo(isDemoModeClient());
+  }, [pathname]);
 
   if (isChromeless) {
     return (
@@ -28,7 +34,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {children}
         </div>
       </div>
-      <AdvisorChat />
+      {!isDemo && <AdvisorChat />}
     </div>
   );
 }
