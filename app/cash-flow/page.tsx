@@ -3,18 +3,15 @@ import { CashFlowView } from "@/components/cash-flow/CashFlowView";
 import { CashFlowMonthPicker } from "@/components/cash-flow/CashFlowMonthPicker";
 import { CashFlowSummaryStats } from "@/components/cash-flow/CashFlowSummaryStats";
 import { getAvailableCashFlowMonths, getCashFlowSankey, getCashFlowTrend } from "@/lib/cash-flow";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 export const dynamic = "force-dynamic";
 
 export default async function CashFlowPage(props: PageProps<"/cash-flow">) {
   const searchParams = await props.searchParams;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const userId = user!.id;
+  const currentUser = await getCurrentUser();
+  const userId = currentUser!.id;
 
   const availableMonths = await getAvailableCashFlowMonths(userId);
 

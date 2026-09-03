@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { TransactionRow } from "@/components/spending/TransactionRow";
 import { getDayTransactions } from "@/lib/spending";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 export const dynamic = "force-dynamic";
 
@@ -32,12 +32,9 @@ export default async function DayTransactionsPage(
       ? `/spending?year=${yearParam}&month=${monthParam}`
       : "/spending";
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const currentUser = await getCurrentUser();
 
-  const result = await getDayTransactions(user!.id, date);
+  const result = await getDayTransactions(currentUser!.id, date);
 
   return (
     <main className="w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">

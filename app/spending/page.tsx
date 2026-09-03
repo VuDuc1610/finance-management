@@ -10,18 +10,15 @@ import {
   getItemsNeedingReconnect,
   getSpendingCategories,
 } from "@/lib/spending";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 export const dynamic = "force-dynamic";
 
 export default async function SpendingPage(props: PageProps<"/spending">) {
   const searchParams = await props.searchParams;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const userId = user!.id;
+  const currentUser = await getCurrentUser();
+  const userId = currentUser!.id;
 
   const [availableMonths, itemsNeedingReconnect] = await Promise.all([
     getAvailableMonths(userId),

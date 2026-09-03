@@ -9,17 +9,14 @@ import {
 import { getSubscriptionsAndBills } from "@/lib/subscriptions";
 import { getSpendingComparison } from "@/lib/analytics";
 import { getAvailableCashFlowMonths, getCashFlowTrend } from "@/lib/cash-flow";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const displayName = user?.user_metadata?.full_name || user?.email || "there";
-  const userId = user!.id;
+  const currentUser = await getCurrentUser();
+  const displayName = currentUser!.displayName;
+  const userId = currentUser!.id;
 
   const [netWorthSeries, availableMonths, subscriptions, analyticsData, availableCashFlowMonths] =
     await Promise.all([

@@ -28,8 +28,11 @@ export default function LandingPage() {
               >
                 Start free
               </Link>
-              <a href="#how" className="font-sans text-[1rem] text-dye-indigo">
-                See a real month →
+              <a
+                href="/api/demo/enter"
+                className="rounded-pill border border-dye-indigo px-8 py-4 font-sans text-[1rem] text-dye-indigo transition hover:bg-dye-indigo/10"
+              >
+                Check the demo
               </a>
             </div>
             <p className="mt-7 font-mono text-[0.8125rem] text-linen-700">

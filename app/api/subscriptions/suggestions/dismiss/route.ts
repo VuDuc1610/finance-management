@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dismissSubscriptionSuggestion } from "@/lib/subscription-suggestions";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (user.isDemo) {
+    return NextResponse.json({ error: "Not available in demo mode" }, { status: 403 });
   }
 
   const body = await request.json();

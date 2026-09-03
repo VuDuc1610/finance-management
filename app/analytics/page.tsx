@@ -3,7 +3,7 @@ import { SpendingComparisonCard } from "@/components/analytics/SpendingCompariso
 import { getSpendingComparison } from "@/lib/analytics";
 import { COMPARISON_OPTIONS } from "@/lib/analytics-types";
 import type { ComparisonMode } from "@/lib/analytics-types";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +18,9 @@ export default async function AnalyticsPage(props: PageProps<"/analytics">) {
     : searchParams.compare;
   const mode: ComparisonMode = isComparisonMode(compareParam) ? compareParam : "month";
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const currentUser = await getCurrentUser();
 
-  const data = await getSpendingComparison(user!.id, mode);
+  const data = await getSpendingComparison(currentUser!.id, mode);
 
   return (
     <main className="w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">

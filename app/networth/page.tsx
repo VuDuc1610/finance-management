@@ -7,16 +7,13 @@ import {
   getAssetDistribution,
   getNetWorthBreakdownSeries,
 } from "@/lib/net-worth";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const userId = user!.id;
+  const currentUser = await getCurrentUser();
+  const userId = currentUser!.id;
 
   const [breakdown, assetDistribution, accountsBreakdown] = await Promise.all([
     getNetWorthBreakdownSeries(userId),

@@ -4,17 +4,14 @@ import { UpcomingPayments } from "@/components/subscriptions/UpcomingPayments";
 import { SubscriptionsList } from "@/components/subscriptions/SubscriptionsList";
 import { SubscriptionSuggestions } from "@/components/subscriptions/SubscriptionSuggestions";
 import { getSubscriptionsAndBills } from "@/lib/subscriptions";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 export const dynamic = "force-dynamic";
 
 export default async function SubscriptionsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const currentUser = await getCurrentUser();
 
-  const { items, summary } = await getSubscriptionsAndBills(user!.id);
+  const { items, summary } = await getSubscriptionsAndBills(currentUser!.id);
 
   return (
     <main className="w-full max-w-6xl flex-1 px-6 py-10 md:px-10 lg:px-16">
