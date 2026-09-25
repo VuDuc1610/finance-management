@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Dropdown } from "@/components/ui/Dropdown";
 import type { SpendingMonth } from "@/lib/spending";
 
@@ -33,6 +33,7 @@ export function SpendingMonthPicker({
   selected,
 }: SpendingMonthPickerProps) {
   const router = useRouter();
+  const pathname = usePathname();
 
   const options = availableMonths.map((month) => ({
     value: monthKey(month),
@@ -45,7 +46,7 @@ export function SpendingMonthPicker({
       options={options}
       onChange={(value) => {
         const [year, month] = value.split("-");
-        router.push(`/spending?year=${year}&month=${month}`);
+        router.push(`${pathname}?year=${year}&month=${month}`);
       }}
     />
   );
